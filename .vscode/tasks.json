@@ -8,10 +8,17 @@
                 "/Zi",
                 "/EHsc",
                 "/nologo",
-                "/Fe${workspaceFolder}\\main.exe",
+                // --- 출력 경로 지정 ---
+                "/Fe${workspaceFolder}\\bin\\game.exe",     // 실행 파일(.exe)
+                "/Fo${workspaceFolder}\\build\\",           // 오브젝트 파일(.obj)
+                "/Fd${workspaceFolder}\\bin\\",             // 디버그 정보 파일(.pdb)
+                // --- 소스 파일 및 라이브러리 ---
                 "*.c",
                 "user32.lib",
-                "gdi32.lib"
+                "gdi32.lib",
+                // --- 링커 옵션 ---
+                "/link",
+                "/ILK:${workspaceFolder}\\build\\game.ilk"  // 증분 링크 파일(.ilk)
             ],
             "options": {
                 "cwd": "${workspaceFolder}\\src"
