@@ -8,13 +8,13 @@
                 "/Zi",
                 "/EHsc",
                 "/nologo",
-                "/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "${file}",
+                "/Fe${workspaceFolder}\\main.exe",
+                "*.c",
                 "user32.lib",
                 "gdi32.lib"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceFolder}\\src"
             },
             "problemMatcher": [
                 "$msCompile"
