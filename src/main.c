@@ -5,8 +5,8 @@
 // 게임 관련 전역변수들
 static float g_playerX, g_playerY;
 static RECT g_clientRect;
-const int PLAYER_SIZE = 50;
-const float PLAYER_SPEED = 200.0f; // 초당 픽셀 단위 속도
+const int PLAYER_SIZE = 20;
+const float PLAYER_SPEED = 500.0f; // 초당 픽셀 단위 속도
 
 // 윈도우 메시지 처리 함수
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
@@ -70,7 +70,7 @@ int WINAPI WinMain(
 
     hwnd = CreateWindow(
         _T("LastResistanceWindowClass"), _T("최후의 저항"), WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+        CW_USEDEFAULT, CW_USEDEFAULT, 720, 1080,
         NULL, NULL, hInstance, NULL);
 
     ShowWindow(hwnd, nCmdShow);
@@ -107,11 +107,32 @@ int WINAPI WinMain(
             float deltaTime = (float)(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
             lastTime = currentTime;
 
-            // --- 입력 처리 (Update) ---
-            if (GetAsyncKeyState('A') & 0x8000) g_playerX -= PLAYER_SPEED * deltaTime;
-            if (GetAsyncKeyState('D') & 0x8000) g_playerX += PLAYER_SPEED * deltaTime;
-            if (GetAsyncKeyState('W') & 0x8000) g_playerY -= PLAYER_SPEED * deltaTime;
-            if (GetAsyncKeyState('S') & 0x8000) g_playerY += PLAYER_SPEED * deltaTime;
+            // --- 입력 처리 및 상태 업데이트 ---
+            float deltaX = 0.0f;
+            float deltaY = 0.0f;
+
+            // 1. 기본 자동 스크롤 (위로 밀려남)
+            // 기본 속도의 10%로 위로 자동 스크롤
+            deltaY -= PLAYER_SPEED * 0.1f;
+
+            // 2. 키 입력에 따른 추가 이동
+            if (GetAsyncKeyState('A') & 0x8000) deltaX -= PLAYER_SPEED;
+            if (GetAsyncKeyState('D') & 0x8000) deltaX += PLAYER_SPEED;
+            if (GetAsyncKeyState('W') & 0x8000) deltaY -= PLAYER_SPEED; // 위로 추가 가속
+            if (GetAsyncKeyState('S') & 0x8000)
+            {
+                // S키: 하단에 가까워질수록 속도 감소
+                float lowerLimitY = (float)g_clientRect.bottom - PLAYER_SIZE;
+                if (g_playerY < lowerLimitY)
+                {
+                    float ratio = (lowerLimitY - g_playerY) / lowerLimitY;  // 배율. 아래로 갈수록 작아짐
+                    deltaY += PLAYER_SPEED * ratio;
+                }
+            }
+
+            // 3. 최종 위치 업데이트 (deltaTime 적용)
+            g_playerX += deltaX * deltaTime;
+            g_playerY += deltaY * deltaTime;
 
             // --- 상태 업데이트 (Update) ---
             // 경계 처리
