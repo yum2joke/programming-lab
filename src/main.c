@@ -2,7 +2,7 @@
 #include <tchar.h>
 #include <stdbool.h>
 
-#include "game.h"
+#include "game/game.h"
 
 // 윈도우 메시지 처리 함수
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
