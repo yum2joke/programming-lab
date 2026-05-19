@@ -31,6 +31,7 @@
 #define BULLET_SIZE 10
 #define BULLET_COLOR RGB(181, 230, 29)
 #define FIRE_RATE 0.05f // 발당 대기 시간
+#define BULLET_DAMAGE 10.0f
 
 // 보스
 #define BOSS_WIDTH 200

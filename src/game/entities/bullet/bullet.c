@@ -70,3 +70,29 @@ void Bullet_Fire(float startX, float startY, float dirX, float dirY)
         }
     }
 }
+
+bool Bullet_IsActive(int index)
+{
+    if (index < 0 || index >= BULLET_MAX_COUNT)
+    {
+        return false;
+    }
+    return s_bullets[index].active;
+}
+
+void Bullet_GetPosition(int index, LONG* x, LONG* y)
+{
+    if (index >= 0 && index < BULLET_MAX_COUNT && x != NULL && y != NULL)
+    {
+        *x = (LONG)s_bullets[index].x;
+        *y = (LONG)s_bullets[index].y;
+    }
+}
+
+void Bullet_Deactivate(int index)
+{
+    if (index >= 0 && index < BULLET_MAX_COUNT)
+    {
+        s_bullets[index].active = false;
+    }
+}

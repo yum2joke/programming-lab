@@ -9,6 +9,7 @@
 #include "entities/bullet/bullet.h"
 #include "entities/boss/boss.h"
 #include "entities/star/star.h"
+#include "collision/collision_manager.h"
 
 // 게임 상태 변수
 static RECT g_clientRect;
@@ -65,6 +66,9 @@ void Game_Update(float deltaTime)
     Player_Update(deltaTime);
     Bullet_Update(deltaTime, g_clientRect);
     Boss_Update(deltaTime);
+
+    // 충돌 처리
+    CollisionManager_CheckAll();
 }
 
 // 화면 렌더링: 모든 모듈의 렌더링 함수 호출
