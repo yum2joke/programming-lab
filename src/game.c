@@ -19,6 +19,16 @@ typedef struct {
 } Star;
 static Star g_stars[STAR_COUNT];
 
+// 총알을 위한 구조체 및 배열
+typedef struct {
+    float x, y;
+    float dx, dy; // 방향 벡터
+    bool active;
+} Bullet;
+static Bullet g_bullets[BULLET_MAX_COUNT];
+
+static float g_fireCooldown = 0.0f;
+
 // 게임 초기화
 void Game_Init(HWND hwnd)
 {
@@ -34,6 +44,12 @@ void Game_Init(HWND hwnd)
         g_stars[i].x = (float)(rand() % g_clientRect.right);
         g_stars[i].y = (float)(rand() % g_clientRect.bottom);
         g_stars[i].size = (rand() % STAR_MAX_SIZE) + 1;
+    }
+
+    // 총알 배열 초기화
+    for (int i = 0; i < BULLET_MAX_COUNT; ++i)
+    {
+        g_bullets[i].active = false;
     }
 }
 
@@ -55,6 +71,65 @@ void Game_Update(float deltaTime)
             g_stars[i].y = (float)g_clientRect.bottom;
             g_stars[i].x = (float)(rand() % g_clientRect.right);
             g_stars[i].size = (rand() % 5) + 1;
+        }
+    }
+
+    // 발사 쿨다운 감소
+    g_fireCooldown -= deltaTime;
+
+    // 자동 발사
+    if (g_fireCooldown <= 0.0f)
+    {
+        g_fireCooldown = FIRE_RATE; // 쿨다운 초기화
+
+        // 비활성화된 총알을 찾아 발사
+        for (int i = 0; i < BULLET_MAX_COUNT; ++i)
+        {
+            if (!g_bullets[i].active)
+            {
+                g_bullets[i].active = true;
+
+                // 시작 위치: 플레이어 중심
+                float playerCenterX = g_playerX + PLAYER_SIZE / 2.0f;
+                float playerCenterY = g_playerY + PLAYER_SIZE / 2.0f;
+                g_bullets[i].x = playerCenterX;
+                g_bullets[i].y = playerCenterY;
+
+                // 방향 벡터 계산 (플레이어 -> 마우스)
+                float dirX = g_mouseX - playerCenterX;
+                float dirY = g_mouseY - playerCenterY;
+                float length = sqrtf(dirX * dirX + dirY * dirY);
+
+                if (length > 0.001f)
+                {
+                    g_bullets[i].dx = (dirX / length);
+                    g_bullets[i].dy = (dirY / length);
+                }
+                else // 마우스가 플레이어 위에 있을 경우, 위로 발사
+                {
+                    g_bullets[i].dx = 0.0f;
+                    g_bullets[i].dy = -1.0f;
+                }
+                
+                break; // 한 프레임에 한 발만 발사
+            }
+        }
+    }
+
+    // 총알 위치 업데이트
+    for (int i = 0; i < BULLET_MAX_COUNT; ++i)
+    {
+        if (g_bullets[i].active)
+        {
+            g_bullets[i].x += g_bullets[i].dx * BULLET_SPEED * deltaTime;
+            g_bullets[i].y += g_bullets[i].dy * BULLET_SPEED * deltaTime;
+
+            // 화면을 벗어나면 비활성화
+            if (g_bullets[i].x < 0 || g_bullets[i].x > g_clientRect.right ||
+                g_bullets[i].y < 0 || g_bullets[i].y > g_clientRect.bottom)
+            {
+                g_bullets[i].active = false;
+            }
         }
     }
 
@@ -118,6 +193,23 @@ void Game_Render(HWND hwnd)
         FillRect(hMemDC, &starRect, hStarBrush);
     }
     DeleteObject(hStarBrush);
+
+    // 총알 그리기
+    HBRUSH hBulletBrush = CreateSolidBrush(BULLET_COLOR);
+    for (int i = 0; i < BULLET_MAX_COUNT; ++i)
+    {
+        if (g_bullets[i].active)
+        {
+            RECT bulletRect = {
+                (int)g_bullets[i].x - BULLET_SIZE / 2,
+                (int)g_bullets[i].y - BULLET_SIZE / 2,
+                (int)g_bullets[i].x + BULLET_SIZE / 2,
+                (int)g_bullets[i].y + BULLET_SIZE / 2
+            };
+            FillRect(hMemDC, &bulletRect, hBulletBrush);
+        }
+    }
+    DeleteObject(hBulletBrush);
     
     // 조준선 그리기 (일시정지에는 X)
     if (!g_isPaused)

@@ -26,3 +26,10 @@ const TCHAR* PAUSE_TEXT = _T("일시정지");
 float STAR_SPEED = 700.0f;
 const COLORREF STAR_COLOR = RGB(150, 150, 150);
 const int STAR_MAX_SIZE = 5;
+
+// 총알
+#define BULLET_MAX_COUNT 50
+const float BULLET_SPEED = 1500.0f;
+const int BULLET_SIZE = 10;
+const COLORREF BULLET_COLOR = RGB(181, 230, 29);
+const float FIRE_RATE = 0.05f; // 발당 대기 시간
