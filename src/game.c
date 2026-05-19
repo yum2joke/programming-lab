@@ -1,5 +1,7 @@
 #include <stdbool.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "game.h"
 #include "config.h"
@@ -10,6 +12,13 @@ static RECT g_clientRect;
 static int g_mouseX, g_mouseY;
 static bool g_isPaused = false;
 
+// 배경 별 효과를 위한 구조체 및 배열
+typedef struct {
+    float x, y;
+    int size;
+} Star;
+static Star g_stars[STAR_COUNT];
+
 // 게임 초기화
 void Game_Init(HWND hwnd)
 {
@@ -17,6 +26,15 @@ void Game_Init(HWND hwnd)
     g_playerX = (float)(g_clientRect.right - PLAYER_SIZE) / 2.0f;
     g_playerY = (float)(g_clientRect.bottom - PLAYER_SIZE) / 2.0f;
     ShowCursor(FALSE); // 시스템 커서 숨기기
+
+    // 배경 별 초기화
+    srand((unsigned int)time(NULL)); // 난수 시드 설정
+    for (int i = 0; i < STAR_COUNT; ++i)
+    {
+        g_stars[i].x = (float)(rand() % g_clientRect.right);
+        g_stars[i].y = (float)(rand() % g_clientRect.bottom);
+        g_stars[i].size = (rand() % STAR_MAX_SIZE) + 1;
+    }
 }
 
 // 매 프레임 게임 상태를 업데이트
@@ -25,6 +43,19 @@ void Game_Update(float deltaTime)
     if (g_isPaused)
     {
         return; // 일시정지 상태에서는 업데이트 중단
+    }
+
+    // 배경 별 위치 업데이트
+    for (int i = 0; i < STAR_COUNT; ++i)
+    {
+        g_stars[i].y -= STAR_SPEED * deltaTime; // 별을 위로 이동
+        // 별이 화면 상단을 벗어나면, 화면 하단에서 다시 생성
+        if (g_stars[i].y < 0)
+        {
+            g_stars[i].y = (float)g_clientRect.bottom;
+            g_stars[i].x = (float)(rand() % g_clientRect.right);
+            g_stars[i].size = (rand() % 5) + 1;
+        }
     }
 
     // 이번 프레임의 이동량
@@ -72,6 +103,21 @@ void Game_Render(HWND hwnd)
 
     // 배경 그리기
     FillRect(hMemDC, &g_clientRect, (HBRUSH)GetStockObject(BLACK_BRUSH));
+    
+    // 배경 별 그리기
+    HBRUSH hStarBrush = CreateSolidBrush(STAR_COLOR);
+    for (int i = 0; i < STAR_COUNT; ++i)
+    {
+        // 별의 크기를 반영하여 사각형으로 그리기
+        RECT starRect = {
+            (int)g_stars[i].x,
+            (int)g_stars[i].y,
+            (int)g_stars[i].x + g_stars[i].size,
+            (int)g_stars[i].y + g_stars[i].size
+        };
+        FillRect(hMemDC, &starRect, hStarBrush);
+    }
+    DeleteObject(hStarBrush);
     
     // 조준선 그리기 (일시정지에는 X)
     if (!g_isPaused)
