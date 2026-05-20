@@ -16,6 +16,7 @@ static RECT g_clientRect;
 static int g_mouseX, g_mouseY;
 static bool g_isPaused = false;
 static float g_fireCooldown = 0.0f;
+static bool g_isGameOver = false;
 
 // 게임 초기화
 void Game_Init(HWND hwnd)
@@ -30,12 +31,13 @@ void Game_Init(HWND hwnd)
     Bullet_Init();
     Boss_Init(g_clientRect);
     Star_Init(g_clientRect);
+    g_isGameOver = false;
 }
 
 // 매 프레임 게임 상태 업데이트: 모든 모듈의 업데이트 함수 호출
 void Game_Update(float deltaTime)
 {
-    if (g_isPaused)
+    if (g_isPaused || g_isGameOver)
     {
         return; // 일시정지 상태에서는 업데이트 중단
     }
@@ -54,11 +56,11 @@ void Game_Update(float deltaTime)
 
         if (length > 0.001f)
         {
-            Bullet_Fire(playerCenterX, playerCenterY, dirX / length, dirY / length);
+            Bullet_Fire(LAYER_PLAYER_BULLET, playerCenterX, playerCenterY, dirX / length, dirY / length);
         }
         else    // 마우스가 플레이어 위에 있을 경우, 위로 발사
         {
-            Bullet_Fire(playerCenterX, playerCenterY, 0.0f, -1.0f);
+            Bullet_Fire(LAYER_PLAYER_BULLET, playerCenterX, playerCenterY, 0.0f, -1.0f);
         }
     }
 
@@ -98,10 +100,11 @@ void Game_Render(HWND hwnd)
         // 플레이어 중심에서 마우스 커서를 관통하는 직선 계산
         float dirX = g_mouseX - playerCenterX;
         float dirY = g_mouseY - playerCenterY;
-        float length = sqrtf(dirX * dirX + dirY * dirY);
+        float length = sqrtf(dirX * dirX + dirY * dirY);    // 길이 구하기
 
         if (length > 0.001f)
         {
+            // 벡터 정규화로 화면 밖 길게 그려버리기
             float endX = playerCenterX + (dirX / length) * 2000.0f;
             float endY = playerCenterY + (dirY / length) * 2000.0f;
             LineTo(hMemDC, (int)endX, (int)endY);
@@ -118,6 +121,20 @@ void Game_Render(HWND hwnd)
     Bullet_Render(hMemDC);
     Player_Render(hMemDC);
     
+    // 게임오버 UI 그리기
+    if (g_isGameOver)
+    {
+        SetTextColor(hMemDC, GAMEOVER_TEXT_COLOR);
+        SetBkMode(hMemDC, TRANSPARENT);
+        HFONT hFont = CreateFont(GAMEOVER_FONT_SIZE, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, PAUSE_FONT_NAME);
+        HFONT hOldFont = (HFONT)SelectObject(hMemDC, hFont);
+
+        DrawText(hMemDC, GAMEOVER_TEXT, -1, &g_clientRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+        SelectObject(hMemDC, hOldFont);
+        DeleteObject(hFont);
+    }
+
     // 일시정지 UI 그리기
     if (g_isPaused)
     {
@@ -205,4 +222,9 @@ void Game_Cleanup(void)
 {
     ClipCursor(NULL);
     ShowCursor(TRUE);
+}
+
+void Game_SetGameOver(void)
+{
+    g_isGameOver = true;
 }

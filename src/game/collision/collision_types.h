@@ -5,10 +5,12 @@
 // 충돌 객체 레이어
 // LayerMask 이용. 0000, 0001, 0010, 0100... 쉬프트되는 순서대로 저장. 최대 32개(int)
 typedef enum {
-    LAYER_NONE          = 0,
-    LAYER_PLAYER_BULLET = 1 << 0, // 1
-    LAYER_BOSS          = 1 << 1, // 2
-    // TODO: LAYER_PLAYER, LAYER_ENEMY, LAYER_ENEMY_BULLET, LAYER_ITEM 등 추가
+    LAYER_NONE           = 0,
+    LAYER_PLAYER         = 1 << 0, // 1
+    LAYER_PLAYER_BULLET  = 1 << 1, // 2
+    LAYER_BOSS           = 1 << 2, // 4
+    LAYER_BOSS_BULLET    = 1 << 3, // 8
+    // TODO: LAYER_ENEMY, LAYER_ENEMY_BULLET, LAYER_ITEM 등 추가
 } CollisionLayer;
 
 // 충돌 검사를 위한 범용 객체

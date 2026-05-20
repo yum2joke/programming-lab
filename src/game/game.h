@@ -15,3 +15,6 @@ void Game_HandleKeyDown(HWND hwnd, WPARAM wParam);
 void Game_HandleMouseMove(LPARAM lParam);
 void Game_HandleSize(HWND hwnd);
 void Game_Cleanup(void);
+
+// 게임 상태 변경
+void Game_SetGameOver(void);

@@ -1,11 +1,18 @@
 #include "boss.h"
 #include "config.h"
 #include <stdbool.h>
+#include <math.h>
+
+#include "game/entities/bullet/bullet.h"
 
 static float s_bossX, s_bossY;
 static float s_currentHP, s_maxHP;
 static RECT s_clientRect;
 static bool s_isAlive;
+
+// 보스 공격 패턴용 변수
+static float s_angle = 0.0f;
+static float s_fireCooldown = 0.0f;
 
 void Boss_Init(RECT clientRect)
 {
@@ -15,6 +22,7 @@ void Boss_Init(RECT clientRect)
     s_maxHP = BOSS_MAX_HP;
     s_currentHP = BOSS_MAX_HP;
     s_isAlive = true;
+    s_fireCooldown = BOSS_BURST_INTERVAL;
 }
 
 void Boss_Update(float deltaTime)
@@ -24,7 +32,26 @@ void Boss_Update(float deltaTime)
         return;
     }
 
-    // TODO: 대미지 입는 애니메이션?
+    // 회전하며 총알 발사
+    s_angle += BOSS_ROTATION_SPEED * deltaTime;
+    s_fireCooldown -= deltaTime;
+
+    if (s_fireCooldown <= 0.0f)
+    {
+        s_fireCooldown = BOSS_BURST_INTERVAL;
+
+        float bossCenterX = s_bossX + BOSS_WIDTH / 2.0f;
+        float bossCenterY = s_bossY + BOSS_HEIGHT / 2.0f;
+
+        // 12방향으로 총알 발사
+        for (int i = 0; i < 12; i++)
+        {
+            float current_angle = s_angle + (i * (3.1415926535f * 2.0f / 12.0f));
+            float dirX = cosf(current_angle);
+            float dirY = sinf(current_angle);
+            Bullet_Fire(LAYER_BOSS_BULLET, bossCenterX, bossCenterY, dirX, dirY);
+        }
+    }
 }
 
 void Boss_Render(HDC hdc)

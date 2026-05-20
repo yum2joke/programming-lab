@@ -5,9 +5,13 @@
 
 #include "game/entities/bullet/bullet.h"
 #include "game/entities/boss/boss.h"
+#include "game/entities/player/player.h"
+#include "game/game.h"
 
-#define MAX_COLLIDABLES 200     // 게임 내 최대 충돌체 수
-static Collidable s_collidables[MAX_COLLIDABLES];   // 충돌체 담는 배열
+// OOP 대신 데이터 지향 설계(DOD) 기반 충돌 시스템.
+// 배열 + struct 관리로 캐시 히트율 극대화
+#define MAX_COLLIDABLES 200
+static Collidable s_collidables[MAX_COLLIDABLES];
 static int s_collidable_count = 0;
 
 // 충돌 발생 시 결과 처리
@@ -17,13 +21,18 @@ static void HandleCollision(Collidable* a, Collidable* b)
     if ((a->layer == LAYER_PLAYER_BULLET && b->layer == LAYER_BOSS) ||
         (a->layer == LAYER_BOSS && b->layer == LAYER_PLAYER_BULLET))
     {
-        // 충돌한 객체 중 총알 찾기
         Collidable* bullet_collidable = (a->layer == LAYER_PLAYER_BULLET) ? a : b;
         
-        Bullet_Deactivate(bullet_collidable->source_index); // 총알 비활성화
+        Bullet_Deactivate(bullet_collidable->source_index);
         Boss_TakeDamage(BULLET_DAMAGE);
     }
-    // TODO: 다른 충돌 결과 처리 로직 추가
+
+    // 플레이어 vs 보스 또는 플레이어 vs 보스 총알
+    if ((a->layer == LAYER_PLAYER && (b->layer == LAYER_BOSS || b->layer == LAYER_BOSS_BULLET)) ||
+        (b->layer == LAYER_PLAYER && (a->layer == LAYER_BOSS || a->layer == LAYER_BOSS_BULLET)))
+    {
+        Game_SetGameOver();
+    }
 }
 
 // 모든 활성 객체를 충돌체 목록으로 수집
@@ -35,19 +44,44 @@ static void GatherCollidables()
     if (Boss_IsAlive() && s_collidable_count < MAX_COLLIDABLES)
     {
         s_collidables[s_collidable_count].layer = LAYER_BOSS;
-        s_collidables[s_collidable_count].mask = LAYER_PLAYER_BULLET;   // 보스 - 플레이어 총알
+        s_collidables[s_collidable_count].mask = LAYER_PLAYER_BULLET | LAYER_PLAYER;
         s_collidables[s_collidable_count].rect = Boss_GetRect();
         s_collidable_count++;
     }
+    
+    // 플레이어
+    if (s_collidable_count < MAX_COLLIDABLES)
+    {
+        s_collidables[s_collidable_count].layer = LAYER_PLAYER;
+        s_collidables[s_collidable_count].mask = LAYER_BOSS | LAYER_BOSS_BULLET;
+        s_collidables[s_collidable_count].rect.left = (LONG)Player_GetX();
+        s_collidables[s_collidable_count].rect.top = (LONG)Player_GetY();
+        s_collidables[s_collidable_count].rect.right = (LONG)Player_GetX() + PLAYER_SIZE;
+        s_collidables[s_collidable_count].rect.bottom = (LONG)Player_GetY() + PLAYER_SIZE;
+        s_collidable_count++;
+    }
 
-    // 플레이어 총알 (다른 총알을 어찌할지가 고민이 되네)
+    // 모든 총알
     for (int i = 0; i < BULLET_MAX_COUNT; i++)
     {
         if (s_collidable_count >= MAX_COLLIDABLES) break;
         if (Bullet_IsActive(i))
         {
-            s_collidables[s_collidable_count].layer = LAYER_PLAYER_BULLET;
-            s_collidables[s_collidable_count].mask = LAYER_BOSS;        // 플레이어 총알 - 보스
+            CollisionLayer layer = Bullet_GetLayer(i);
+            s_collidables[s_collidable_count].layer = layer;
+
+            if (layer == LAYER_PLAYER_BULLET)
+            {
+                s_collidables[s_collidable_count].mask = LAYER_BOSS;
+            }
+            else if (layer == LAYER_BOSS_BULLET)
+            {
+                s_collidables[s_collidable_count].mask = LAYER_PLAYER;
+            }
+            else
+            {
+                s_collidables[s_collidable_count].mask = LAYER_NONE;
+            }
             
             LONG x, y;
             Bullet_GetPosition(i, &x, &y);
@@ -60,8 +94,6 @@ static void GatherCollidables()
             s_collidable_count++;
         }
     }
-
-    // TODO: 다른 객체들 추가
 }
 
 void CollisionManager_CheckAll(void)
