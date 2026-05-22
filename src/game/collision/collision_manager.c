@@ -3,14 +3,14 @@
 #include "collision_manager.h"
 #include "config.h"
 
-#include "game/entities/bullet/bullet.h"
-#include "game/entities/boss/boss.h"
-#include "game/entities/player/player.h"
+#include "game/projectiles/projectile.h"
+#include "game/actors/boss/boss.h"
+#include "game/actors/player/player.h"
 #include "game/game.h"
 
 // OOP 대신 데이터 지향 설계(DOD) 기반 충돌 시스템.
 // 배열 + struct 관리로 캐시 히트율 극대화
-#define MAX_COLLIDABLES 200
+#define MAX_COLLIDABLES 600     // 투사체 + 레이저 + 아이템 + 파편 + 보스/플레이어/적 ...
 static Collidable s_collidables[MAX_COLLIDABLES];
 static int s_collidable_count = 0;
 
@@ -23,7 +23,7 @@ static void HandleCollision(Collidable* a, Collidable* b)
     {
         Collidable* bullet_collidable = (a->layer == LAYER_PLAYER_BULLET) ? a : b;
         
-        Bullet_Deactivate(bullet_collidable->source_index);
+        Projectile_Deactivate(bullet_collidable->source_index);
         Boss_TakeDamage(BULLET_DAMAGE);
     }
 
@@ -61,34 +61,22 @@ static void GatherCollidables()
         s_collidable_count++;
     }
 
-    // 모든 총알
-    for (int i = 0; i < BULLET_MAX_COUNT; i++)
+    // 모든 투사체
+    for (int i = 0; i < Projectile_GetPoolSize(); i++)
     {
         if (s_collidable_count >= MAX_COLLIDABLES) break;
-        if (Bullet_IsActive(i))
+        
+        Projectile* projectile = Projectile_GetFromPool(i);
+        if (projectile && projectile->active)
         {
-            CollisionLayer layer = Bullet_GetLayer(i);
-            s_collidables[s_collidable_count].layer = layer;
-
-            if (layer == LAYER_PLAYER_BULLET)
-            {
-                s_collidables[s_collidable_count].mask = LAYER_BOSS;
-            }
-            else if (layer == LAYER_BOSS_BULLET)
-            {
-                s_collidables[s_collidable_count].mask = LAYER_PLAYER;
-            }
-            else
-            {
-                s_collidables[s_collidable_count].mask = LAYER_NONE;
-            }
+            s_collidables[s_collidable_count].layer = projectile->layer;
+            s_collidables[s_collidable_count].mask = projectile->mask;
             
-            LONG x, y;
-            Bullet_GetPosition(i, &x, &y);
-            s_collidables[s_collidable_count].rect.left = x - BULLET_SIZE / 2;
-            s_collidables[s_collidable_count].rect.top = y - BULLET_SIZE / 2;
-            s_collidables[s_collidable_count].rect.right = x + BULLET_SIZE / 2;
-            s_collidables[s_collidable_count].rect.bottom = y + BULLET_SIZE / 2;
+            // 충돌 영역 계산 (투사체의 x, y는 중심 좌표)
+            s_collidables[s_collidable_count].rect.left = (LONG)projectile->x - projectile->size / 2;
+            s_collidables[s_collidable_count].rect.top = (LONG)projectile->y - projectile->size / 2;
+            s_collidables[s_collidable_count].rect.right = (LONG)projectile->x + projectile->size / 2;
+            s_collidables[s_collidable_count].rect.bottom = (LONG)projectile->y + projectile->size / 2;
             
             s_collidables[s_collidable_count].source_index = i;
             s_collidable_count++;
@@ -98,7 +86,7 @@ static void GatherCollidables()
 
 void CollisionManager_CheckAll(void)
 {
-    // 매 프레임마다 충돌 검사할 객체(=충돌체) 목록을 새로 구성
+    // 매 프레임마다 충돌 검사할 충돌체 배열을 새로 구성
     GatherCollidables();
 
     // 모든 충돌체 쌍을 검사 (Broad-phase)

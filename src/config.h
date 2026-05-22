@@ -31,8 +31,8 @@
 #define STAR_MAX_SIZE 5
 
 // 총알
-#define BULLET_MAX_COUNT 100
-#define BULLET_SPEED 1500.0f
+#define PROJECTILE_MAX_COUNT 500
+#define BULLET_SPEED 1000.0f
 #define BULLET_SIZE 10
 #define BULLET_COLOR RGB(181, 230, 29)
 #define FIRE_RATE 0.05f // 발당 대기 시간

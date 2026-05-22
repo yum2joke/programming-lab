@@ -5,10 +5,10 @@
 #include "game.h"
 #include "config.h"
 
-#include "entities/player/player.h"
-#include "entities/bullet/bullet.h"
-#include "entities/boss/boss.h"
-#include "entities/star/star.h"
+#include "actors/player/player.h"
+#include "actors/boss/boss.h"
+#include "projectiles/projectile.h"
+#include "star/star.h"
 #include "collision/collision_manager.h"
 
 // 게임 상태 변수
@@ -28,7 +28,7 @@ void Game_Init(HWND hwnd)
     srand((unsigned int)time(NULL));
 
     Player_Init(g_clientRect);
-    Bullet_Init();
+    Projectile_Init();
     Boss_Init(g_clientRect);
     Star_Init(g_clientRect);
     g_isGameOver = false;
@@ -56,17 +56,17 @@ void Game_Update(float deltaTime)
 
         if (length > 0.001f)
         {
-            Bullet_Fire(LAYER_PLAYER_BULLET, playerCenterX, playerCenterY, dirX / length, dirY / length);
+            Projectile_CreatePlayerBullet(playerCenterX, playerCenterY, dirX / length, dirY / length);
         }
         else    // 마우스가 플레이어 위에 있을 경우, 위로 발사
         {
-            Bullet_Fire(LAYER_PLAYER_BULLET, playerCenterX, playerCenterY, 0.0f, -1.0f);
+            Projectile_CreatePlayerBullet(playerCenterX, playerCenterY, 0.0f, -1.0f);
         }
     }
 
     Star_Update(deltaTime, g_clientRect);
     Player_Update(deltaTime);
-    Bullet_Update(deltaTime, g_clientRect);
+    Projectile_Update(deltaTime, g_clientRect);
     Boss_Update(deltaTime);
 
     // 충돌 처리
@@ -118,7 +118,7 @@ void Game_Render(HWND hwnd)
 
     // 게임 요소 그리기
     Boss_Render(hMemDC);
-    Bullet_Render(hMemDC);
+    Projectile_Render(hMemDC);
     Player_Render(hMemDC);
     
     // 게임오버 UI 그리기

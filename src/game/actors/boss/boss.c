@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "game/entities/bullet/bullet.h"
+#include "game/projectiles/projectile.h"
 
 static float s_bossX, s_bossY;
 static float s_currentHP, s_maxHP;
@@ -49,7 +49,7 @@ void Boss_Update(float deltaTime)
             float current_angle = s_angle + (i * (3.1415926535f * 2.0f / 12.0f));
             float dirX = cosf(current_angle);
             float dirY = sinf(current_angle);
-            Bullet_Fire(LAYER_BOSS_BULLET, bossCenterX, bossCenterY, dirX, dirY);
+            Projectile_CreateBossBullet(bossCenterX, bossCenterY, dirX, dirY);
         }
     }
 }
