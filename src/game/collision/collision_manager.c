@@ -3,9 +3,9 @@
 #include "collision_manager.h"
 #include "config.h"
 
-#include "game/projectiles/projectile.h"
-#include "game/actors/boss/boss.h"
-#include "game/actors/player/player.h"
+#include "game/entities/projectiles/projectile.h"
+#include "game/entities/actors/boss/boss.h"
+#include "game/entities/actors/player/player.h"
 #include "game/game.h"
 
 // OOP 대신 데이터 지향 설계(DOD) 기반 충돌 시스템.

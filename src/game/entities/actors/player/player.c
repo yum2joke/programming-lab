@@ -1,8 +1,13 @@
 #include "player.h"
 #include "config.h"
+#include <math.h>
+
+#include "game/entities/projectiles/projectile.h"
+#include "game/attacks/attack.h"
 
 static float s_playerX, s_playerY;
 static RECT s_clientRect;
+static float s_fireCooldown = 0.0f;
 
 void Player_Init(RECT clientRect)
 {
@@ -11,8 +16,31 @@ void Player_Init(RECT clientRect)
     s_playerY = (float)(s_clientRect.bottom - PLAYER_SIZE) / 2.0f;
 }
 
-void Player_Update(float deltaTime)
+void Player_Update(float deltaTime, int mouseX, int mouseY)
 {
+    // --- 발사 로직 ---
+    s_fireCooldown -= deltaTime;
+    if (s_fireCooldown <= 0.0f)
+    {
+        s_fireCooldown = FIRE_RATE; // 쿨다운 초기화
+
+        float playerCenterX = Player_GetCenterX();
+        float playerCenterY = Player_GetCenterY();
+        float dirX = mouseX - playerCenterX;
+        float dirY = mouseY - playerCenterY;
+        float length = sqrtf(dirX * dirX + dirY * dirY);
+
+        if (length > 0.001f)
+        {
+            Attack_SingleShot(playerCenterX, playerCenterY, dirX / length, dirY / length, Projectile_CreatePlayerBullet);
+        }
+        else    // 마우스가 플레이어 위에 있을 경우, 위로 발사
+        {
+            Attack_SingleShot(playerCenterX, playerCenterY, 0.0f, -1.0f, Projectile_CreatePlayerBullet);
+        }
+    }
+
+    // --- 이동 로직 ---
     float deltaX = 0.0f;
     float deltaY = 0.0f;
 

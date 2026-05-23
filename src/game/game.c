@@ -5,17 +5,16 @@
 #include "game.h"
 #include "config.h"
 
-#include "actors/player/player.h"
-#include "actors/boss/boss.h"
-#include "projectiles/projectile.h"
-#include "star/star.h"
+#include "entities/actors/player/player.h"
+#include "entities/actors/boss/boss.h"
+#include "entities/projectiles/projectile.h"
+#include "entities/star/star.h"
 #include "collision/collision_manager.h"
 
 // 게임 상태 변수
 static RECT g_clientRect;
 static int g_mouseX, g_mouseY;
 static bool g_isPaused = false;
-static float g_fireCooldown = 0.0f;
 static bool g_isGameOver = false;
 
 // 게임 초기화
@@ -42,30 +41,8 @@ void Game_Update(float deltaTime)
         return; // 일시정지 상태에서는 업데이트 중단
     }
 
-    // 자동 발사 로직
-    g_fireCooldown -= deltaTime;
-    if (g_fireCooldown <= 0.0f)
-    {
-        g_fireCooldown = FIRE_RATE; // 쿨다운 초기화
-
-        float playerCenterX = Player_GetCenterX();
-        float playerCenterY = Player_GetCenterY();
-        float dirX = g_mouseX - playerCenterX;
-        float dirY = g_mouseY - playerCenterY;
-        float length = sqrtf(dirX * dirX + dirY * dirY);
-
-        if (length > 0.001f)
-        {
-            Projectile_CreatePlayerBullet(playerCenterX, playerCenterY, dirX / length, dirY / length);
-        }
-        else    // 마우스가 플레이어 위에 있을 경우, 위로 발사
-        {
-            Projectile_CreatePlayerBullet(playerCenterX, playerCenterY, 0.0f, -1.0f);
-        }
-    }
-
     Star_Update(deltaTime, g_clientRect);
-    Player_Update(deltaTime);
+    Player_Update(deltaTime, g_mouseX, g_mouseY);
     Projectile_Update(deltaTime, g_clientRect);
     Boss_Update(deltaTime);
 

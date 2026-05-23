@@ -10,7 +10,7 @@ typedef struct Projectile Projectile;
 typedef void (*ProjectileUpdateFunc)(Projectile* self, float deltaTime, RECT clientRect);
 typedef void (*ProjectileRenderFunc)(const Projectile* self, HDC hdc);
 
-// 투사체 정적 속성 템플릿
+// 투사체 정적 속성 템플릿. 추상클래스 역할
 typedef struct {
     CollisionLayer layer;
     int mask;
@@ -18,7 +18,7 @@ typedef struct {
     COLORREF color;
     int size;
     
-    // 함수 포인터
+    // 함수 포인터. 순수가상함수 역할
     ProjectileUpdateFunc update;
     ProjectileRenderFunc render;
 } ProjectileDesc;
