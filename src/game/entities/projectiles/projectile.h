@@ -19,7 +19,7 @@ void Projectile_CreateBossBullet(float startX, float startY, float dirX, float d
 int Projectile_GetPoolSize(void);
 
 // 해당 인덱스의 투사체 포인터 리턴
-Projectile* Projectile_GetFromPool(int index);
+const Projectile* Projectile_GetFromPool(int index);
 
 // 투사체 비활성화
 void Projectile_Deactivate(int index);

@@ -147,6 +147,18 @@ void Projectile_CreateBossBullet(float startX, float startY, float dirX, float d
 
 // --- 외부 모듈 상호작용 함수 ---
 
-int Projectile_GetPoolSize(void) { return PROJECTILE_MAX_COUNT; }
-Projectile* Projectile_GetFromPool(int index) { return (index >= 0 && index < PROJECTILE_MAX_COUNT) ? &s_projectiles[index] : NULL; }
-void Projectile_Deactivate(int index) { if (index >= 0 && index < PROJECTILE_MAX_COUNT) s_projectiles[index].active = false; }
+int Projectile_GetPoolSize(void)
+{
+    return PROJECTILE_MAX_COUNT;
+}
+
+// getter로 멤버변수 접근 대신, 구조체 포인터를 직접 넘김. const로 값 수정은 제한.
+const Projectile* Projectile_GetFromPool(int index)
+{
+    return (index >= 0 && index < PROJECTILE_MAX_COUNT) ? &s_projectiles[index] : NULL;
+}
+
+void Projectile_Deactivate(int index)
+{
+    if (index >= 0 && index < PROJECTILE_MAX_COUNT) s_projectiles[index].active = false;
+}

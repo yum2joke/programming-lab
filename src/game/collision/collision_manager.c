@@ -66,7 +66,7 @@ static void GatherCollidables()
     {
         if (s_collidable_count >= MAX_COLLIDABLES) break;
         
-        Projectile* projectile = Projectile_GetFromPool(i);
+        const Projectile* projectile = Projectile_GetFromPool(i);
         if (projectile && projectile->active)
         {
             s_collidables[s_collidable_count].layer = projectile->layer;

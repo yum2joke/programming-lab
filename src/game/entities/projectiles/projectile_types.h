@@ -23,7 +23,8 @@ typedef struct {
     ProjectileRenderFunc render;
 } ProjectileDesc;
 
-// 투사체 구조체
+// 투사체 구조체.
+// -> 연산자로 직접접근을 허용하기 위해 헤더파일에 선언.
 struct Projectile {
     // 동적 데이터
     bool active;
