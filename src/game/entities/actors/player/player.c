@@ -1,9 +1,9 @@
 #include "player.h"
 #include "config.h"
-#include <math.h>
 
-#include "game/entities/projectiles/projectile.h"
 #include "game/attacks/attack.h"
+
+#include <math.h>
 
 // 플레이어의 내부 상태 데이터
 typedef struct {

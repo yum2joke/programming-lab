@@ -1,12 +1,14 @@
-#include <stdbool.h>
-
 #include "collision_manager.h"
-#include "config.h"
 
-#include "game/entities/projectiles/projectile.h"
+#include "collision_types.h"
+#include "config.h"
 #include "game/entities/actors/boss/boss.h"
 #include "game/entities/actors/player/player.h"
+#include "game/entities/projectiles/projectile.h"
 #include "game/game.h"
+
+#include <windows.h>
+
 
 // OOP 대신 데이터 지향 설계(DOD) 기반 충돌 시스템.
 // 배열 + struct 관리로 캐시 히트율 극대화

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <windows.h>
 #include "beam_types.h"
+
+#include <windows.h>
 
 // --- 빔 전체관리자 함수 ---
 void Beam_Init(void);

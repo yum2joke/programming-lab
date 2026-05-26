@@ -1,7 +1,11 @@
 #include "attack.h"
-#include "game/entities/projectiles/projectile.h"
+
 #include "config.h"
+#include "game/entities/projectiles/projectile.h"
+// #include beam
+
 #include <math.h>
+
 
 #ifndef PI
 #define PI 3.1415926535f

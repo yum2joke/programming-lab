@@ -1,8 +1,8 @@
-#include <windows.h>
-#include <tchar.h>
-#include <stdbool.h>
-
 #include "game/game.h"
+
+#include <stdbool.h>
+#include <tchar.h>
+#include <windows.h>
 
 // 윈도우 메시지 처리 함수
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)

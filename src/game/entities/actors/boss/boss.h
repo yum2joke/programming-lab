@@ -1,8 +1,9 @@
 #pragma once
 
-#include <windows.h>
+#include "boss_types.h"
+
 #include <stdbool.h>
-#include "boss_catalog.h"
+
 
 void Boss_Spawn(BossType type, RECT clientRect);
 void Boss_Update(float deltaTime);

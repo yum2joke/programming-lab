@@ -1,6 +1,7 @@
 #include "projectile.h"
-#include "projectile_catalog.h"
+
 #include "config.h"
+#include "projectile_catalog.h"
 
 // 오브젝트 풀
 static Projectile s_projectiles[PROJECTILE_MAX_COUNT];

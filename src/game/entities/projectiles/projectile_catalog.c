@@ -1,5 +1,8 @@
 #include "projectile_catalog.h"
+
 #include "config.h"
+
+#include <stddef.h> // NULL
 
 // --- 업데이트 함수 ---
 // TODO: 파일 분리 필요.

@@ -1,4 +1,5 @@
 #include "boss_A.h"
+
 #include "config.h"
 
 // 페이즈별 패턴 설정. 반드시 hpThreshold가 높은 순서대로 정렬

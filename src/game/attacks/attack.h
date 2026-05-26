@@ -1,7 +1,6 @@
 #pragma once
 
 #include "game/attacks/attack_types.h"
-#include <windows.h>
 
 // --- 개별 공격 형태 함수 라이브러리 ---
 

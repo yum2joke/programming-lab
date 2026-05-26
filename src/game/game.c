@@ -1,15 +1,17 @@
-#include <stdbool.h>
-#include <math.h>
-#include <time.h>
-
 #include "game.h"
-#include "config.h"
 
-#include "entities/actors/player/player.h"
+#include "config.h"
+#include "collision/collision_manager.h"
 #include "entities/actors/boss/boss.h"
+#include "entities/actors/player/player.h"
 #include "entities/projectiles/projectile.h"
 #include "entities/star/star.h"
-#include "collision/collision_manager.h"
+
+#include <math.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <windows.h>
 
 // 게임 상태 변수
 static RECT g_clientRect;

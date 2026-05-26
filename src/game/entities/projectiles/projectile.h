@@ -1,7 +1,8 @@
 #pragma once
 
-#include <windows.h>
 #include "projectile_types.h"
+
+#include <windows.h>
 
 // --- 투사체 전체관리자 함수 ---
 

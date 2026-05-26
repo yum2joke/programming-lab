@@ -1,6 +1,8 @@
 #include "rotating.h"
-#include "game/patterns/pattern.h"
+
 #include "game/attacks/attack.h"
+#include "game/patterns/pattern.h"
+
 #include <stdlib.h>
 
 typedef struct {

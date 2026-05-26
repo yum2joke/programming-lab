@@ -1,6 +1,9 @@
 #include "star.h"
+
 #include "config.h"
+
 #include <stdlib.h>
+#include <windows.h>
 
 typedef struct {
     float x, y;

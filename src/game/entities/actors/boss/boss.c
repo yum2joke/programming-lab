@@ -1,9 +1,11 @@
 #include "boss.h"
+
+#include "boss_catalog.h"
 #include "config.h"
+#include "game/patterns/pattern.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
-
-#include "game/patterns/pattern.h"
 
 typedef struct {
     float x;

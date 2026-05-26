@@ -1,8 +1,10 @@
 #include "aimed.h"
-#include "game/patterns/pattern.h"
+
 #include "game/attacks/attack.h"
-#include <stdlib.h>
+#include "game/patterns/pattern.h"
+
 #include <math.h>
+#include <stdlib.h>
 
 typedef struct {
     float duration;
