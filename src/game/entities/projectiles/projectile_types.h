@@ -4,6 +4,13 @@
 #include <stdbool.h>
 #include "game/collision/collision_types.h"
 
+// 투사체 종류
+typedef enum {
+    PROJECTILE_PLAYER_BULLET,
+    PROJECTILE_BOSS_BULLET,
+    PROJECTILE_TYPE_COUNT
+} ProjectileType;
+
 typedef struct Projectile Projectile;
 
 // 함수 포인터

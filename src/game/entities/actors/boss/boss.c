@@ -1,81 +1,193 @@
 #include "boss.h"
 #include "config.h"
 #include <stdbool.h>
-#include <math.h>
+#include <stdlib.h>
 
-#include "game/projectiles/projectile.h"
+#include "game/patterns/pattern.h"
 
-static float s_bossX, s_bossY;
-static float s_currentHP, s_maxHP;
-static RECT s_clientRect;
-static bool s_isAlive;
+typedef struct {
+    float x;
+    float y;
+    float currentHP;
+    float maxHP;
+    RECT clientRect;
+    bool isAlive;
 
-// 보스 공격 패턴용 변수
-static float s_angle = 0.0f;
-static float s_fireCooldown = 0.0f;
+    // --- 보스 프레임워크 상태 변수 ---
+    Pattern* currentPattern;              // 보스 행동 정의 패턴 객체
+    const BossDesc* currentBossDesc;      // 보스 설계도
+    int currentPhaseIndex;                // 페이즈 인덱스
+    PatternType lastPatternType;          // 마지막으로 사용한 패턴 타입
+} Boss;
 
-void Boss_Init(RECT clientRect)
+static Boss s_boss;
+
+void Boss_Spawn(BossType type, RECT clientRect)
 {
-    s_clientRect = clientRect;
-    s_bossX = (float)(clientRect.right - BOSS_WIDTH) / 2.0f;
-    s_bossY = 50.0f;
-    s_maxHP = BOSS_MAX_HP;
-    s_currentHP = BOSS_MAX_HP;
-    s_isAlive = true;
-    s_fireCooldown = BOSS_BURST_INTERVAL;
-}
+    // 이전 보스 데이터 정리
+    Boss_Cleanup();
 
-void Boss_Update(float deltaTime)
-{
-    if (!s_isAlive)
+    // 설계도 불러오기
+    s_boss.currentBossDesc = BossCatalog_GetDesc(type);
+    if (!s_boss.currentBossDesc)
     {
         return;
     }
 
-    // 회전하며 총알 발사
-    s_angle += BOSS_ROTATION_SPEED * deltaTime;
-    s_fireCooldown -= deltaTime;
+    s_boss.clientRect = clientRect;
+    s_boss.x = (float)(clientRect.right - BOSS_WIDTH) / 2.0f;
+    s_boss.y = 50.0f;
+    s_boss.maxHP = s_boss.currentBossDesc->maxHp;
+    s_boss.currentHP = s_boss.maxHP;
+    s_boss.isAlive = true;
+    s_boss.currentPhaseIndex = -1; // 페이즈 미설정 상태
+    s_boss.lastPatternType = PATTERN_NONE;
 
-    if (s_fireCooldown <= 0.0f)
+    // currentPattern, currentPhaseIndex 등의 상세값은 Boss_Update 첫 프레임에 알잘딱 설정됨
+}
+
+void Boss_Update(float deltaTime)
+{
+    if (!s_boss.isAlive || !s_boss.currentBossDesc)
     {
-        s_fireCooldown = BOSS_BURST_INTERVAL;
+        return;
+    }
 
-        float bossCenterX = s_bossX + BOSS_WIDTH / 2.0f;
-        float bossCenterY = s_bossY + BOSS_HEIGHT / 2.0f;
+    float hpRatio = Boss_GetHPRatio();  // 현재 보스의 체력
+    int newPhaseIndex = -1;
+    bool phaseChanged = false;          // 페이즈가 변경되었는가?
+    bool patternFinished = false;       // 패턴이 시간이 지나 끝났는가?
 
-        // 12방향으로 총알 발사
-        for (int i = 0; i < 12; i++)
+    // 1. 현재 HP에 알맞은 페이즈 찾기
+
+    for (int i = 0; i < s_boss.currentBossDesc->phaseCount; ++i)
+    {
+        if (hpRatio <= s_boss.currentBossDesc->phases[i].hpThreshold)
         {
-            float current_angle = s_angle + (i * (3.1415926535f * 2.0f / 12.0f));
-            float dirX = cosf(current_angle);
-            float dirY = sinf(current_angle);
-            Projectile_CreateBossBullet(bossCenterX, bossCenterY, dirX, dirY);
+            newPhaseIndex = i;
         }
+    }
+    // 페이즈 변경되었는지 여부 판단
+    phaseChanged = (newPhaseIndex != -1 && newPhaseIndex != s_boss.currentPhaseIndex);
+
+    // 2. 현재 패턴 실행 및 패턴종료 여부 확인
+
+    if (!s_boss.currentPattern || !s_boss.currentPattern->update)
+    {
+        // 패턴이 없는 초기 상태일 시-
+        // 패턴이 끝난 것으로 하여, 3번에서 새 패턴을 뽑게 함
+        patternFinished = true;
+    }
+    else
+    {
+        // 패턴 존재 시-
+        // 우선 패턴 실행
+        PatternStatus status = s_boss.currentPattern->update(s_boss.currentPattern, deltaTime, Boss_GetCenterX(), Boss_GetCenterY());
+
+        // 종료됐을 시 플래그 활성화
+        if (status == PATTERN_FINISHED)
+        {
+            patternFinished = true;
+        }
+    }
+
+    // 3. 페이즈가 변경되거나 or 패턴이 시간이 다 되어 끝났을 시- 새로운 패턴으로 교체
+
+    if (phaseChanged || patternFinished)
+    {
+        // 페이즈 변경 시- 인덱스 갱신 및 lastPatternType 초기화
+        if (phaseChanged)
+        {
+            s_boss.currentPhaseIndex = newPhaseIndex;
+            s_boss.lastPatternType = PATTERN_NONE;
+        }
+
+        // 3-1. 마지막 패턴을 제외한 전체 가중치 계산
+
+        const BossPhase* currentPhase = &s_boss.currentBossDesc->phases[s_boss.currentPhaseIndex];
+        float totalWeight = 0;
+        bool canExclude = (currentPhase->patternCount > 1);
+        
+        for (int i = 0; i < currentPhase->patternCount; ++i)
+        {
+            // 방금 사용했던 마지막 패턴은 제외
+            // 패턴이 하나밖에 없으면, 재사용해야 하니 패스
+            if (canExclude && currentPhase->patterns[i].type == s_boss.lastPatternType) continue;
+
+            // 마지막 패턴 제외 시, 총합이 1.0이 아니게 되므로 totalWeight 계산필요
+            totalWeight += currentPhase->patterns[i].weight;
+        }
+
+        // 3-2. 패턴 선택
+
+        const PhasePattern* selectedPattern = NULL;     // 새로 선택한 패턴. 기본은 NULL
+        float randomValue = (float)rand() / RAND_MAX * totalWeight; // 0 ~ totalWeight 사이 랜덤값
+
+        for (int i = 0; i < currentPhase->patternCount; ++i)
+        {
+            // 방금 사용했던 마지막 패턴은 제외
+            if (canExclude && currentPhase->patterns[i].type == s_boss.lastPatternType) continue;
+
+            // 가중치 랜덤 알고리즘
+            // 랜덤값이 가중치보다 작을 때 선택
+            if (randomValue < currentPhase->patterns[i].weight)
+            {
+                selectedPattern = &currentPhase->patterns[i];
+                break;
+            }
+            // 랜덤값 -= 가중치
+            randomValue -= currentPhase->patterns[i].weight;
+        }
+
+        // 3-3. 패턴 교체
+
+        // 패턴 새로 선택시-
+        if (selectedPattern)
+        {
+            // 기존 패턴 삭제
+            if (s_boss.currentPattern)
+            {
+                s_boss.currentPattern->destroy(s_boss.currentPattern);
+            }
+
+            // 패턴 업데이트
+            s_boss.currentPattern = Pattern_Create(selectedPattern->type, selectedPattern->duration);
+            s_boss.lastPatternType = selectedPattern->type;
+        }
+    }
+}
+
+void Boss_Cleanup(void)
+{
+    if (s_boss.currentPattern)
+    {
+        s_boss.currentPattern->destroy(s_boss.currentPattern);
+        s_boss.currentPattern = NULL;
     }
 }
 
 void Boss_Render(HDC hdc)
 {
-    if (!s_isAlive)
+    if (!s_boss.isAlive)
     {
         return;
     }
 
     // 보스 본체 그리기
     HBRUSH hBossBrush = CreateSolidBrush(BOSS_COLOR);
-    RECT bossRect = { (int)s_bossX, (int)s_bossY, (int)s_bossX + BOSS_WIDTH, (int)s_bossY + BOSS_HEIGHT };
+    RECT bossRect = { (int)s_boss.x, (int)s_boss.y, (int)s_boss.x + BOSS_WIDTH, (int)s_boss.y + BOSS_HEIGHT };
     FillRect(hdc, &bossRect, hBossBrush);
     DeleteObject(hBossBrush);
 
     // 체력바 회색배경 그리기
-    RECT hpBgRect = { 10, 10, s_clientRect.right - 10, 10 + BOSS_HP_BAR_HEIGHT };
+    RECT hpBgRect = { 10, 10, s_boss.clientRect.right - 10, 10 + BOSS_HP_BAR_HEIGHT };
     HBRUSH hBgBrush = CreateSolidBrush(BOSS_HP_BAR_BG_COLOR);
     FillRect(hdc, &hpBgRect, hBgBrush);
     DeleteObject(hBgBrush);
 
     // 현재 체력 그리기
-    float hpRatio = s_currentHP / s_maxHP;
-    int hpBarWidth = (int)((s_clientRect.right - 20) * hpRatio);
+    float hpRatio = s_boss.currentHP / s_boss.maxHP;
+    int hpBarWidth = (int)((s_boss.clientRect.right - 20) * hpRatio);
     RECT hpRect = { 10, 10, 10 + hpBarWidth, 10 + BOSS_HP_BAR_HEIGHT };
     HBRUSH hHpBrush = CreateSolidBrush(BOSS_HP_BAR_COLOR);
     FillRect(hdc, &hpRect, hHpBrush);
@@ -84,26 +196,41 @@ void Boss_Render(HDC hdc)
 
 void Boss_TakeDamage(float damage)
 {
-    if (!s_isAlive)
+    if (!s_boss.isAlive)
     {
         return;
     }
 
-    s_currentHP -= damage;
-    if (s_currentHP <= 0)
+    s_boss.currentHP -= damage;
+    if (s_boss.currentHP <= 0)
     {
-        s_currentHP = 0;
-        s_isAlive = false;
+        s_boss.currentHP = 0;
+        s_boss.isAlive = false;
     }
+}
+
+float Boss_GetHPRatio(void)
+{
+    return (s_boss.maxHP > 0) ? (s_boss.currentHP / s_boss.maxHP) : 0.0f;
 }
 
 bool Boss_IsAlive(void)
 {
-    return s_isAlive;
+    return s_boss.isAlive;
 }
 
 RECT Boss_GetRect(void)
 {
-    RECT rect = { (LONG)s_bossX, (LONG)s_bossY, (LONG)(s_bossX + BOSS_WIDTH), (LONG)(s_bossY + BOSS_HEIGHT) };
+    RECT rect = { (LONG)s_boss.x, (LONG)s_boss.y, (LONG)(s_boss.x + BOSS_WIDTH), (LONG)(s_boss.y + BOSS_HEIGHT) };
     return rect;
+}
+
+float Boss_GetCenterX(void)
+{
+    return s_boss.x + BOSS_WIDTH / 2.0f;
+}
+
+float Boss_GetCenterY(void)
+{
+    return s_boss.y + BOSS_HEIGHT / 2.0f;
 }

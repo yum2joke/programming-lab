@@ -32,13 +32,13 @@
 
 // 총알
 #define PROJECTILE_MAX_COUNT 500
-#define BULLET_SPEED 1000.0f
+#define BULLET_SPEED 1500.0f
 #define BULLET_SIZE 10
 #define BULLET_COLOR RGB(181, 230, 29)
 #define FIRE_RATE 0.05f // 발당 대기 시간
 #define BULLET_DAMAGE 10.0f
 #define BOSS_BULLET_COLOR RGB(255, 100, 100)
-#define BOSS_BULLET_SPEED 400.0f
+#define BOSS_BULLET_SPEED 200.0f
 
 // 보스
 #define BOSS_WIDTH 200
@@ -48,5 +48,5 @@
 #define BOSS_HP_BAR_COLOR RGB(255, 0, 0)
 #define BOSS_HP_BAR_BG_COLOR RGB(50, 50, 50)
 #define BOSS_HP_BAR_HEIGHT 10
-#define BOSS_BURST_INTERVAL 0.25f // 보스 탄막 발사 간격
-#define BOSS_ROTATION_SPEED 5.0f // 초당 라디안
+#define BOSS_BURST_INTERVAL 0.2f // 보스 탄막 발사 간격
+#define BOSS_ROTATION_SPEED -0.7f // 초당 라디안

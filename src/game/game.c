@@ -28,7 +28,7 @@ void Game_Init(HWND hwnd)
 
     Player_Init(g_clientRect);
     Projectile_Init();
-    Boss_Init(g_clientRect);
+    Boss_Spawn(BOSS_TYPE_A, g_clientRect);
     Star_Init(g_clientRect);
     g_isGameOver = false;
 }
@@ -197,6 +197,7 @@ void Game_HandleSize(HWND hwnd)
 // 게임 종료 시 리소스 정리
 void Game_Cleanup(void)
 {
+    Boss_Cleanup();
     ClipCursor(NULL);
     ShowCursor(TRUE);
 }

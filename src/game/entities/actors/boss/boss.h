@@ -2,11 +2,19 @@
 
 #include <windows.h>
 #include <stdbool.h>
+#include "boss_catalog.h"
 
-void Boss_Init(RECT clientRect);
+void Boss_Spawn(BossType type, RECT clientRect);
 void Boss_Update(float deltaTime);
 void Boss_Render(HDC hdc);
+void Boss_Cleanup(void);
 
 void Boss_TakeDamage(float damage);
 bool Boss_IsAlive(void);
 RECT Boss_GetRect(void);
+
+// --- 외부 모듈 상호작용 함수 ---
+
+float Boss_GetCenterX(void);
+float Boss_GetCenterY(void);
+float Boss_GetHPRatio(void);

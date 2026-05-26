@@ -9,10 +9,7 @@ void Projectile_Init(void);
 void Projectile_Update(float deltaTime, RECT clientRect);
 void Projectile_Render(HDC hdc);
 
-// --- 생성 팩토리 함수 ---
-
-void Projectile_CreatePlayerBullet(float startX, float startY, float dirX, float dirY);
-void Projectile_CreateBossBullet(float startX, float startY, float dirX, float dirY);
+void Projectile_Spawn(ProjectileType type, float startX, float startY, float dirX, float dirY);
 
 // --- 외부 모듈 상호작용 함수 ---
 
