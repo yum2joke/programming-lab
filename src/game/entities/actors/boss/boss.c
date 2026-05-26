@@ -14,10 +14,10 @@ typedef struct {
     bool isAlive;
 
     // --- 보스 프레임워크 상태 변수 ---
-    Pattern* currentPattern;              // 보스 행동 정의 패턴 객체
+    Pattern* activePatterns[MAX_CONCURRENT_PATTERNS]; // 동시에 실행 중인 패턴들
     const BossDesc* currentBossDesc;      // 보스 설계도
     int currentPhaseIndex;                // 페이즈 인덱스
-    PatternType lastPatternType;          // 마지막으로 사용한 패턴 타입
+    int lastActionIndex;                  // 마지막으로 선택한 행동(PhasePattern) 인덱스
 } Boss;
 
 static Boss s_boss;
@@ -41,9 +41,12 @@ void Boss_Spawn(BossType type, RECT clientRect)
     s_boss.currentHP = s_boss.maxHP;
     s_boss.isAlive = true;
     s_boss.currentPhaseIndex = -1; // 페이즈 미설정 상태
-    s_boss.lastPatternType = PATTERN_NONE;
+    s_boss.lastActionIndex = -1;
 
-    // currentPattern, currentPhaseIndex 등의 상세값은 Boss_Update 첫 프레임에 알잘딱 설정됨
+    for (int i = 0; i < MAX_CONCURRENT_PATTERNS; i++)
+    {
+        s_boss.activePatterns[i] = NULL;
+    }
 }
 
 void Boss_Update(float deltaTime)
@@ -70,25 +73,33 @@ void Boss_Update(float deltaTime)
     // 페이즈 변경되었는지 여부 판단
     phaseChanged = (newPhaseIndex != -1 && newPhaseIndex != s_boss.currentPhaseIndex);
 
-    // 2. 현재 패턴 실행 및 패턴종료 여부 확인
+    // 2. 현재 패턴들 실행 및 모두 종료되었는지 확인
+    bool hasActive = false;
+    bool allFinished = true;
 
-    if (!s_boss.currentPattern || !s_boss.currentPattern->update)
+    for (int i = 0; i < MAX_CONCURRENT_PATTERNS; i++)
     {
-        // 패턴이 없는 초기 상태일 시-
-        // 패턴이 끝난 것으로 하여, 3번에서 새 패턴을 뽑게 함
-        patternFinished = true;
-    }
-    else
-    {
-        // 패턴 존재 시-
-        // 우선 패턴 실행
-        PatternStatus status = s_boss.currentPattern->update(s_boss.currentPattern, deltaTime, Boss_GetCenterX(), Boss_GetCenterY());
-
-        // 종료됐을 시 플래그 활성화
-        if (status == PATTERN_FINISHED)
+        if (s_boss.activePatterns[i])
         {
-            patternFinished = true;
+            hasActive = true;
+            PatternStatus status = s_boss.activePatterns[i]->update(s_boss.activePatterns[i], deltaTime, Boss_GetCenterX(), Boss_GetCenterY());
+
+            // 패턴이 끝나면 즉시 메모리 해제 및 NULL 처리
+            if (status == PATTERN_FINISHED)
+            {
+                s_boss.activePatterns[i]->destroy(s_boss.activePatterns[i]);
+                s_boss.activePatterns[i] = NULL;
+            }
+            else
+            {
+                allFinished = false; // 하나라도 돌고 있으면 끝나지 않음
+            }
         }
+    }
+
+    if (!hasActive || allFinished)
+    {
+        patternFinished = true;
     }
 
     // 3. 페이즈가 변경되거나 or 패턴이 시간이 다 되어 끝났을 시- 새로운 패턴으로 교체
@@ -99,44 +110,46 @@ void Boss_Update(float deltaTime)
         if (phaseChanged)
         {
             s_boss.currentPhaseIndex = newPhaseIndex;
-            s_boss.lastPatternType = PATTERN_NONE;
+            s_boss.lastActionIndex = -1;
         }
 
         // 3-1. 마지막 패턴을 제외한 전체 가중치 계산
 
         const BossPhase* currentPhase = &s_boss.currentBossDesc->phases[s_boss.currentPhaseIndex];
         float totalWeight = 0;
-        bool canExclude = (currentPhase->patternCount > 1);
+        bool canExclude = (currentPhase->patternArrCount > 1);
         
-        for (int i = 0; i < currentPhase->patternCount; ++i)
+        for (int i = 0; i < currentPhase->patternArrCount; ++i)
         {
             // 방금 사용했던 마지막 패턴은 제외
             // 패턴이 하나밖에 없으면, 재사용해야 하니 패스
-            if (canExclude && currentPhase->patterns[i].type == s_boss.lastPatternType) continue;
+            if (canExclude && i == s_boss.lastActionIndex) continue;
 
             // 마지막 패턴 제외 시, 총합이 1.0이 아니게 되므로 totalWeight 계산필요
-            totalWeight += currentPhase->patterns[i].weight;
+            totalWeight += currentPhase->patternArr[i].weight;
         }
 
         // 3-2. 패턴 선택
 
         const PhasePattern* selectedPattern = NULL;     // 새로 선택한 패턴. 기본은 NULL
+        int newActionIndex = -1;
         float randomValue = (float)rand() / RAND_MAX * totalWeight; // 0 ~ totalWeight 사이 랜덤값
 
-        for (int i = 0; i < currentPhase->patternCount; ++i)
+        for (int i = 0; i < currentPhase->patternArrCount; ++i)
         {
             // 방금 사용했던 마지막 패턴은 제외
-            if (canExclude && currentPhase->patterns[i].type == s_boss.lastPatternType) continue;
+            if (canExclude && i == s_boss.lastActionIndex) continue;
 
             // 가중치 랜덤 알고리즘
             // 랜덤값이 가중치보다 작을 때 선택
-            if (randomValue < currentPhase->patterns[i].weight)
+            if (randomValue < currentPhase->patternArr[i].weight)
             {
-                selectedPattern = &currentPhase->patterns[i];
+                selectedPattern = &currentPhase->patternArr[i];
+                newActionIndex = i;
                 break;
             }
             // 랜덤값 -= 가중치
-            randomValue -= currentPhase->patterns[i].weight;
+            randomValue -= currentPhase->patternArr[i].weight;
         }
 
         // 3-3. 패턴 교체
@@ -144,25 +157,35 @@ void Boss_Update(float deltaTime)
         // 패턴 새로 선택시-
         if (selectedPattern)
         {
-            // 기존 패턴 삭제
-            if (s_boss.currentPattern)
+            // 페이즈 강제 변경 시 아직 돌고 있는 기존 패턴들 싹 다 삭제
+            for (int i = 0; i < MAX_CONCURRENT_PATTERNS; i++)
             {
-                s_boss.currentPattern->destroy(s_boss.currentPattern);
+                if (s_boss.activePatterns[i])
+                {
+                    s_boss.activePatterns[i]->destroy(s_boss.activePatterns[i]);
+                    s_boss.activePatterns[i] = NULL;
+                }
             }
 
-            // 패턴 업데이트
-            s_boss.currentPattern = Pattern_Create(selectedPattern->type, &selectedPattern->desc);
-            s_boss.lastPatternType = selectedPattern->type;
+            // 다중 패턴 생성 및 주입
+            for (int i = 0; i < selectedPattern->patternCount; i++)
+            {
+                s_boss.activePatterns[i] = Pattern_Create(selectedPattern->patterns[i].type, &selectedPattern->patterns[i].desc);
+            }
+            s_boss.lastActionIndex = newActionIndex;
         }
     }
 }
 
 void Boss_Cleanup(void)
 {
-    if (s_boss.currentPattern)
+    for (int i = 0; i < MAX_CONCURRENT_PATTERNS; i++)
     {
-        s_boss.currentPattern->destroy(s_boss.currentPattern);
-        s_boss.currentPattern = NULL;
+        if (s_boss.activePatterns[i])
+        {
+            s_boss.activePatterns[i]->destroy(s_boss.activePatterns[i]);
+            s_boss.activePatterns[i] = NULL;
+        }
     }
 }
 

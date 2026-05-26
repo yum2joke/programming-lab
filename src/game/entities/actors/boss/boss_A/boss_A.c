@@ -6,33 +6,49 @@
 static const BossPhase s_boss_a_phases[] = {
     {
         .hpThreshold = 1.0f,    // 100%~
-        .patternCount = 3,
-        .patterns = (const PhasePattern[]){
+        .patternArrCount = 3,
+        .patternArr = (const PhasePattern[]){
             { 
-                .type = PATTERN_AIMED, .weight = 0.4f, 
-                .desc = { .duration = 1.0f, .attackType = PROJECTILE_PLASMA, .count = 3, .interval = 0.3f }
+                .weight = 0.4f, 
+                .patternCount = 1,
+                .patterns = {
+                    { PATTERN_AIMED, { .duration = 1.0f, .attackType = PROJECTILE_PLASMA, .count = 3, .interval = 0.3f } }
+                }
             },
             { 
-                .type = PATTERN_ROTATING, .weight = 0.3f, 
-                .desc = { .duration = 1.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 12, .speed = BOSS_ROTATION_SPEED * 0.7f, .interval = BOSS_BURST_INTERVAL }
+                .weight = 0.3f, 
+                .patternCount = 1,
+                .patterns = {
+                    { PATTERN_ROTATING, { .duration = 1.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 12, .speed = BOSS_ROTATION_SPEED * 0.7f, .interval = BOSS_BURST_INTERVAL } }
+                }
             },
             { 
-                .type = PATTERN_ROTATING, .weight = 0.3f, 
-                .desc = { .duration = 1.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 24, .speed = BOSS_ROTATION_SPEED * 1.2f, .interval = BOSS_BURST_INTERVAL * 0.8f }
+                .weight = 0.3f, 
+                .patternCount = 1,
+                .patterns = {
+                    { PATTERN_ROTATING, { .duration = 1.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 24, .speed = BOSS_ROTATION_SPEED * 1.2f, .interval = BOSS_BURST_INTERVAL * 0.8f } }
+                }
             }
         }
     },
     {
         .hpThreshold = 0.5f,    // 50%~
-        .patternCount = 2,
-        .patterns = (const PhasePattern[]){
+        .patternArrCount = 2,
+        .patternArr = (const PhasePattern[]){
             { 
-                .type = PATTERN_ROTATING, .weight = 0.7f, 
-                .desc = { .duration = 5.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 24, .speed = BOSS_ROTATION_SPEED * 1.2f, .interval = BOSS_BURST_INTERVAL * 0.8f }
+                .weight = 0.5f, 
+                .patternCount = 1,
+                .patterns = {
+                    { PATTERN_ROTATING, { .duration = 2.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 24, .speed = BOSS_ROTATION_SPEED * 1.2f, .interval = BOSS_BURST_INTERVAL * 0.8f } }
+                }
             },
             { 
-                .type = PATTERN_AIMED, .weight = 0.3f, 
-                .desc = { .duration = 1.0f, .attackType = PROJECTILE_PLASMA, .count = 3, .interval = 0.3f }
+                .weight = 0.5f, 
+                .patternCount = 2,
+                .patterns = {
+                    { PATTERN_AIMED, { .duration = 2.0f, .attackType = PROJECTILE_PLASMA, .count = 5, .interval = 0.2f } },
+                    { PATTERN_ROTATING, { .duration = 2.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 16, .speed = BOSS_ROTATION_SPEED * -1.5f, .interval = BOSS_BURST_INTERVAL * 0.6f } }
+                }
             }
         }
     }
