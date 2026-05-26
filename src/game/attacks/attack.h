@@ -8,5 +8,8 @@
 // 단일 투사체 발사
 void Attack_SingleShot(float originX, float originY, float dirX, float dirY, ProjectileType projType);
 
+// 플레이어를 조준하여 단일 투사체 발사
+void Attack_SingleShot_AimToPlayer(float originX, float originY, ProjectileType projType);
+
 // bulletCount만큼 투사체 발사
 void Attack_CircularBurst(float originX, float originY, int bulletCount, float startAngle, ProjectileType projType);

@@ -42,7 +42,7 @@ static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, floa
             y,
             state->bulletCount,
             state->angle,
-            PROJECTILE_BOSS_BULLET
+            PROJECTILE_BOSS_BULLET  // TODO: 직접 선택 안하도록 분리 필요.
         );
     }
 

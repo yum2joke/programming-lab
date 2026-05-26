@@ -6,17 +6,19 @@
 static const BossPhase s_boss_a_phases[] = {
     {
         .hpThreshold = 1.0f,    // 100%~
-        .patternCount = 2,
+        .patternCount = 3,
         .patterns = (const PhasePattern[]){
-            { .type = PATTERN_ROTATING_SLOW_12, .duration = 1.0f, .weight = 0.5f },
-            { .type = PATTERN_ROTATING_FAST_24, .duration = 1.0f, .weight = 0.5f }
+            { .type = PATTERN_PLASMA, .duration = 1.5f, .weight = 0.4f },
+            { .type = PATTERN_ROTATING_SLOW_12, .duration = 1.0f, .weight = 0.3f },
+            { .type = PATTERN_ROTATING_FAST_24, .duration = 1.0f, .weight = 0.3f }
         }
     },
     {
         .hpThreshold = 0.5f,    // 50%~
-        .patternCount = 1,
+        .patternCount = 2,
         .patterns = (const PhasePattern[]){
-            { .type = PATTERN_ROTATING_FAST_24, .duration = 8.0f, .weight = 1.0f }
+            { .type = PATTERN_ROTATING_FAST_24, .duration = 5.0f, .weight = 0.7f },
+            { .type = PATTERN_PLASMA, .duration = 2.0f, .weight = 0.3f }
         }
     }
 };

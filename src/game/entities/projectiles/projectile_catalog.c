@@ -35,6 +35,27 @@ static void RenderProjectile_Default(const Projectile* self, HDC hdc)
     DeleteObject(hBrush);
 }
 
+// 원 렌더링
+static void RenderProjectile_Circle(const Projectile* self, HDC hdc)
+{
+    HBRUSH hBrush = CreateSolidBrush(self->color);
+    HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
+    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+    int renderSize = (int)(self->size * 1.5f);
+
+    Ellipse(hdc,
+        (int)self->x - renderSize / 2,
+        (int)self->y - renderSize / 2,
+        (int)self->x + renderSize / 2,
+        (int)self->y + renderSize / 2);
+
+    SelectObject(hdc, hOldPen);
+    SelectObject(hdc, hOldBrush);
+    DeleteObject(hBrush);
+}
+
 // --- 설계도 ---
 
 // 플레이어 기본 총알
@@ -59,12 +80,24 @@ static const ProjectileDesc s_boss_bullet_desc = {
     .render = RenderProjectile_Default
 };
 
+// 느린 속도의 대형 플라즈마 구체
+static const ProjectileDesc s_plasma_desc = {
+    .layer = LAYER_BOSS_BULLET,
+    .mask = LAYER_PLAYER,
+    .speed = BOSS_PLASMA_SPEED,
+    .color = BOSS_PLASMA_COLOR,
+    .size = BOSS_PLASMA_SIZE,
+    .update = UpdateProjectile_Linear,
+    .render = RenderProjectile_Circle
+};
+
 // --- 설계도 배열 ---
 
 // 모든 투사체 설계도가 담긴 배열
 static const ProjectileDesc* s_projectile_catalog[PROJECTILE_TYPE_COUNT] = {
     [PROJECTILE_PLAYER_BULLET] = &s_player_bullet_desc,
     [PROJECTILE_BOSS_BULLET] = &s_boss_bullet_desc,
+    [PROJECTILE_PLASMA] = &s_plasma_desc,
 };
 
 const ProjectileDesc* ProjectileCatalog_GetDesc(ProjectileType type)
