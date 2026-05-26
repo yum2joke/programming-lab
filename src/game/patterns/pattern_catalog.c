@@ -1,12 +1,11 @@
 #include "pattern_catalog.h"
 #include "rotating/rotating.h"
-#include "plasma/plasma.h"
+#include "aimed/aimed.h"
 
 // type - 패턴생성함수 포인터를 매핑한 배열
 static const PatternCreateFunc s_pattern_catalog[PATTERN_TYPE_COUNT] = {
-    [PATTERN_ROTATING_SLOW_12] = RotatingSlow12Pattern_Create,
-    [PATTERN_ROTATING_FAST_24] = RotatingFast24Pattern_Create,
-    [PATTERN_PLASMA] = PlasmaPattern_Create,
+    [PATTERN_ROTATING] = RotatingPattern_Create,
+    [PATTERN_AIMED] = AimedPattern_Create,
 };
 
 PatternCreateFunc PatternCatalog_GetCreateFunc(PatternType type)

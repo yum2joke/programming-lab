@@ -2,4 +2,4 @@
 
 #include "game/patterns/pattern_types.h"
 
-Pattern* PlasmaPattern_Create(float duration);
+Pattern* AimedPattern_Create(const PatternDesc* desc);

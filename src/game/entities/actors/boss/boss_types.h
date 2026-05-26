@@ -12,8 +12,8 @@ typedef enum {
 // 페이즈를 구성하는 개별 패턴
 typedef struct {
     PatternType type;   // 패턴 종류
-    float duration;     // 패턴 지속시간 (초)
     float weight;       // 선택될 확률 가중치 (전체 합 = 1.0)
+    PatternDesc desc;   // 패턴에게 넘겨줄 상세 기획 데이터
 } PhasePattern;
 
 // 보스의 단일 페이즈 정의

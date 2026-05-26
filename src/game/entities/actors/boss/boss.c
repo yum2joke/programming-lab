@@ -151,7 +151,7 @@ void Boss_Update(float deltaTime)
             }
 
             // 패턴 업데이트
-            s_boss.currentPattern = Pattern_Create(selectedPattern->type, selectedPattern->duration);
+            s_boss.currentPattern = Pattern_Create(selectedPattern->type, &selectedPattern->desc);
             s_boss.lastPatternType = selectedPattern->type;
         }
     }

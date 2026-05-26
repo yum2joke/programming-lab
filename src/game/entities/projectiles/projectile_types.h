@@ -3,14 +3,7 @@
 #include <windows.h>
 #include <stdbool.h>
 #include "game/collision/collision_types.h"
-
-// 투사체 종류
-typedef enum {
-    PROJECTILE_PLAYER_BULLET,
-    PROJECTILE_BOSS_BULLET,
-    PROJECTILE_PLASMA,
-    PROJECTILE_TYPE_COUNT
-} ProjectileType;
+#include "game/attacks/attack_types.h"
 
 typedef struct Projectile Projectile;
 

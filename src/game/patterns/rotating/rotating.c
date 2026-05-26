@@ -1,8 +1,6 @@
 #include "rotating.h"
 #include "game/patterns/pattern.h"
 #include "game/attacks/attack.h"
-#include "game/entities/projectiles/projectile_types.h"
-#include "config.h"
 #include <stdlib.h>
 
 typedef struct {
@@ -13,6 +11,7 @@ typedef struct {
     float fireCooldown;
     float duration;
     float elapsedTime;
+    AttackEntityType attackType;
 } RotatingState;
 
 static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, float x, float y)
@@ -42,14 +41,14 @@ static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, floa
             y,
             state->bulletCount,
             state->angle,
-            PROJECTILE_BOSS_BULLET  // TODO: 직접 선택 안하도록 분리 필요.
+            state->attackType
         );
     }
 
     return PATTERN_RUNNING;
 }
 
-static Pattern* RotatingPattern_Create(int bulletCount, float rotationSpeed, float fireInterval, float duration)
+Pattern* RotatingPattern_Create(const PatternDesc* desc)
 {
     Pattern* p = (Pattern*)malloc(sizeof(Pattern));
     if (!p) return NULL;
@@ -62,28 +61,17 @@ static Pattern* RotatingPattern_Create(int bulletCount, float rotationSpeed, flo
     }
 
     state->angle = 0.0f;
-    state->bulletCount = bulletCount;
-    state->rotationSpeed = rotationSpeed;
-    state->fireInterval = fireInterval;
-    state->fireCooldown = fireInterval;
-    state->duration = duration;
+    state->bulletCount = desc->count;
+    state->rotationSpeed = desc->speed;
+    state->fireInterval = desc->interval;
+    state->fireCooldown = desc->interval;
+    state->duration = desc->duration;
     state->elapsedTime = 0.0f;
+    state->attackType = desc->attackType;
 
     p->state = state;
     p->update = RotatingPattern_Update;
     p->destroy = Pattern_Destroy;
 
     return p;
-}
-
-// --- 외부로 노출되는 생성 함수들 ---
-
-Pattern* RotatingSlow12Pattern_Create(float duration)
-{
-    return RotatingPattern_Create(12, BOSS_ROTATION_SPEED * 0.7f, BOSS_BURST_INTERVAL, duration);
-}
-
-Pattern* RotatingFast24Pattern_Create(float duration)
-{
-    return RotatingPattern_Create(24, BOSS_ROTATION_SPEED * 1.2f, BOSS_BURST_INTERVAL * 0.8f, duration);
 }
