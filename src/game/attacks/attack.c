@@ -31,3 +31,24 @@ void Attack_CircularBurst(float originX, float originY, int bulletCount, float s
         Projectile_Spawn(attackType, originX, originY, dirX, dirY);
     }
 }
+
+void Attack_Execute(float originX, float originY, float centerAngle, const AttackDesc* desc)
+{
+    float dirX = 0.0f;
+    float dirY = 0.0f;
+
+    switch (desc->shape)
+    {
+        case ATTACK_SHAPE_SINGLE:
+            dirX = cosf(centerAngle);
+            dirY = sinf(centerAngle);
+            Attack_SingleShot(originX, originY, dirX, dirY, desc->attackType);
+            break;
+        case ATTACK_SHAPE_CIRCULAR:
+            Attack_CircularBurst(originX, originY, desc->shapeData.circular.count, centerAngle, desc->attackType);
+            break;
+        case ATTACK_SHAPE_SPREAD:
+            // TODO: 추후 부채꼴 발사 로직 연동
+            break;
+    }
+}

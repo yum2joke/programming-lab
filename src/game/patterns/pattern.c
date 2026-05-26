@@ -1,10 +1,11 @@
 #include "pattern.h"
-#include "pattern_catalog.h"
-#include <stdlib.h>
 
-#include "game/entities/actors/player/player.h"
 #include "config.h"
+#include "pattern_catalog.h"
+#include "game/entities/actors/player/player.h"
+
 #include <math.h>
+#include <stdlib.h>
 
 Pattern* Pattern_Create(PatternType type, const PatternDesc* desc)
 {

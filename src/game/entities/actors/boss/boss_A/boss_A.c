@@ -13,21 +13,56 @@ static const BossPhase s_boss_a_phases[] = {
                 .weight = 0.4f, 
                 .patternCount = 1,
                 .patterns = {
-                    { PATTERN_AIMED, { .duration = 1.0f, .attackType = PROJECTILE_PLASMA, .count = 3, .interval = 0.3f } }
+                    {
+                        .type = PATTERN_AIMED,
+                        .desc = {
+                            .duration = 1.0f,
+                            .actionCount = 3,
+                            .interval = 0.3f,
+                            .attack = {
+                                .shape = ATTACK_SHAPE_SINGLE,
+                                .attackType = PROJECTILE_PLASMA
+                            }
+                        }
+                    }
                 }
             },
             { 
                 .weight = 0.3f, 
                 .patternCount = 1,
                 .patterns = {
-                    { PATTERN_ROTATING, { .duration = 1.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 12, .speed = BOSS_ROTATION_SPEED * 0.7f, .interval = BOSS_BURST_INTERVAL } }
+                    {
+                        .type = PATTERN_ROTATING,
+                        .desc = {
+                            .duration = 1.0f,
+                            .speed = BOSS_ROTATION_SPEED * 0.7f,
+                            .interval = BOSS_BURST_INTERVAL,
+                            .attack = {
+                                .shape = ATTACK_SHAPE_CIRCULAR,
+                                .attackType = PROJECTILE_BOSS_BULLET,
+                                .shapeData = { .circular = { .count = 12 } }
+                            }
+                        }
+                    }
                 }
             },
             { 
                 .weight = 0.3f, 
                 .patternCount = 1,
                 .patterns = {
-                    { PATTERN_ROTATING, { .duration = 1.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 24, .speed = BOSS_ROTATION_SPEED * 1.2f, .interval = BOSS_BURST_INTERVAL * 0.8f } }
+                    {
+                        .type = PATTERN_ROTATING,
+                        .desc = {
+                            .duration = 1.0f,
+                            .speed = BOSS_ROTATION_SPEED * 1.2f,
+                            .interval = BOSS_BURST_INTERVAL * 0.8f,
+                            .attack = {
+                                .shape = ATTACK_SHAPE_CIRCULAR,
+                                .attackType = PROJECTILE_BOSS_BULLET,
+                                .shapeData = { .circular = { .count = 24 } }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -40,15 +75,50 @@ static const BossPhase s_boss_a_phases[] = {
                 .weight = 0.5f, 
                 .patternCount = 1,
                 .patterns = {
-                    { PATTERN_ROTATING, { .duration = 2.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 24, .speed = BOSS_ROTATION_SPEED * 1.2f, .interval = BOSS_BURST_INTERVAL * 0.8f } }
+                    {
+                        .type = PATTERN_ROTATING,
+                        .desc = {
+                            .duration = 2.0f,
+                            .speed = BOSS_ROTATION_SPEED * 1.2f,
+                            .interval = BOSS_BURST_INTERVAL * 0.8f,
+                            .attack = {
+                                .shape = ATTACK_SHAPE_CIRCULAR,
+                                .attackType = PROJECTILE_BOSS_BULLET,
+                                .shapeData = { .circular = { .count = 24 } }
+                            }
+                        }
+                    }
                 }
             },
             { 
                 .weight = 0.5f, 
                 .patternCount = 2,
                 .patterns = {
-                    { PATTERN_AIMED, { .duration = 2.0f, .attackType = PROJECTILE_PLASMA, .count = 5, .interval = 0.2f } },
-                    { PATTERN_ROTATING, { .duration = 2.0f, .attackType = PROJECTILE_BOSS_BULLET, .count = 16, .speed = BOSS_ROTATION_SPEED * -1.5f, .interval = BOSS_BURST_INTERVAL * 0.6f } }
+                    {
+                        .type = PATTERN_AIMED,
+                        .desc = {
+                            .duration = 2.0f,
+                            .actionCount = 5,
+                            .interval = 0.2f,
+                            .attack = {
+                                .shape = ATTACK_SHAPE_SINGLE,
+                                .attackType = PROJECTILE_PLASMA
+                            }
+                        }
+                    },
+                    {
+                        .type = PATTERN_ROTATING,
+                        .desc = {
+                            .duration = 2.0f,
+                            .speed = BOSS_ROTATION_SPEED * -1.5f,
+                            .interval = BOSS_BURST_INTERVAL * 0.6f,
+                            .attack = {
+                                .shape = ATTACK_SHAPE_CIRCULAR,
+                                .attackType = PROJECTILE_BOSS_BULLET,
+                                .shapeData = { .circular = { .count = 16 } }
+                            }
+                        }
+                    }
                 }
             }
         }

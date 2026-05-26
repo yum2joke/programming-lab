@@ -15,3 +15,21 @@ typedef enum {
 
 // 투사체 시스템 호환용
 typedef AttackEntityType ProjectileType;
+
+// 발사 형태
+typedef enum {
+    ATTACK_SHAPE_SINGLE,    // 단발
+    ATTACK_SHAPE_CIRCULAR,  // 원형 방사
+    ATTACK_SHAPE_SPREAD     // 부채꼴 방사 (구현예정)
+} AttackShapeType;
+
+// 발사 전용 규격서
+typedef struct {
+    AttackShapeType shape;
+    AttackEntityType attackType;
+    
+    union {
+        struct { int count; } circular;
+        //struct { int count; float spreadAngle; } spread;
+    } shapeData;
+} AttackDesc;

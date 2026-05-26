@@ -1,6 +1,7 @@
 #include "pattern_catalog.h"
-#include "rotating/rotating.h"
+
 #include "aimed/aimed.h"
+#include "rotating/rotating.h"
 
 // type - 패턴생성함수 포인터를 매핑한 배열
 static const PatternCreateFunc s_pattern_catalog[PATTERN_TYPE_COUNT] = {

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <windows.h>
 #include "game/attacks/attack_types.h"
+
+#include <windows.h>
 
 // 패턴의 종류
 typedef enum {
@@ -33,14 +34,15 @@ typedef struct Pattern {
     void* state;
 } Pattern;
 
-// 패턴 생성 및 실행을 위한 범용 데이터 명세서 (DDD 적용)
+// 패턴 설계도
 typedef struct {
     float duration;
-    AttackEntityType attackType;
 
-    // 범용 매개변수 풀
-    int count;           // 생성 갯수, 격발 횟수 등
-    float interval;      // 발사 간격
-    float speed;         // 회전 속도 등 범용 속도
-    float angle;         // 범용 각도
+    // 패턴(동사) 행동 결정 매개변수 풀
+    int actionCount;    // 격발 횟수
+    float interval;     // 발사 간격
+    float speed;        // 회전 속도 등 범용 속도
+
+    // 발사(모양) 전용 규격서
+    AttackDesc attack;
 } PatternDesc;

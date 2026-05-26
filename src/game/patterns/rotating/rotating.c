@@ -7,13 +7,9 @@
 
 typedef struct {
     float angle;
-    float rotationSpeed;
-    int bulletCount;
-    float fireInterval;
     float fireCooldown;
-    float duration;
     float elapsedTime;
-    AttackEntityType attackType;
+    PatternDesc desc;
 } RotatingState;
 
 static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, float x, float y)
@@ -26,25 +22,19 @@ static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, floa
     RotatingState* state = (RotatingState*)self->state;
 
     state->elapsedTime += deltaTime;
-    if (state->elapsedTime >= state->duration)
+    if (state->elapsedTime >= state->desc.duration)
     {
         return PATTERN_FINISHED;
     }
 
-    state->angle += state->rotationSpeed * deltaTime;
+    state->angle += state->desc.speed * deltaTime;
     state->fireCooldown -= deltaTime;
 
     if (state->fireCooldown <= 0.0f)
     {
-        state->fireCooldown += state->fireInterval;
+        state->fireCooldown += state->desc.interval;
 
-        Attack_CircularBurst(
-            x,
-            y,
-            state->bulletCount,
-            state->angle,
-            state->attackType
-        );
+        Attack_Execute(x, y, state->angle, &state->desc.attack);
     }
 
     return PATTERN_RUNNING;
@@ -63,13 +53,9 @@ Pattern* RotatingPattern_Create(const PatternDesc* desc)
     }
 
     state->angle = 0.0f;
-    state->bulletCount = desc->count;
-    state->rotationSpeed = desc->speed;
-    state->fireInterval = desc->interval;
     state->fireCooldown = desc->interval;
-    state->duration = desc->duration;
     state->elapsedTime = 0.0f;
-    state->attackType = desc->attackType;
+    state->desc = *desc;
 
     p->state = state;
     p->update = RotatingPattern_Update;

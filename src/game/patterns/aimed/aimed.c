@@ -7,13 +7,10 @@
 #include <stdlib.h>
 
 typedef struct {
-    float duration;
-    float elapsedTime;
-    AttackEntityType attackType;
-    int maxCount;
     int currentCount;
-    float fireInterval;
     float fireCooldown;
+    float elapsedTime;
+    PatternDesc desc;
 } AimedState;
 
 static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x, float y)
@@ -26,23 +23,20 @@ static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x
     AimedState* state = (AimedState*)self->state;
     state->elapsedTime += deltaTime;
 
-    if (state->elapsedTime >= state->duration)
+    if (state->elapsedTime >= state->desc.duration)
     {
         return PATTERN_FINISHED;
     }
 
     state->fireCooldown -= deltaTime;
 
-    // 설정된 격발 횟수(maxCount)만큼 간격(fireInterval)을 두고 조준 사격
-    if (state->fireCooldown <= 0.0f && state->currentCount < state->maxCount)
+    // 설정된 격발 횟수(count)만큼 간격(interval)을 두고 조준 사격
+    if (state->fireCooldown <= 0.0f && state->currentCount < state->desc.actionCount)
     {
-        state->fireCooldown += state->fireInterval;
+        state->fireCooldown += state->desc.interval;
 
         float angle = Pattern_GetAngleToPlayer(x, y);
-        float dirX = cosf(angle);
-        float dirY = sinf(angle);
-
-        Attack_SingleShot(x, y, dirX, dirY, state->attackType);
+        Attack_Execute(x, y, angle, &state->desc.attack);
         state->currentCount++;
     }
    
@@ -61,13 +55,10 @@ Pattern* AimedPattern_Create(const PatternDesc* desc)
         return NULL;
     }
 
-    state->duration = desc->duration;
     state->elapsedTime = 0.0f;
-    state->attackType = desc->attackType;
-    state->maxCount = desc->count;
     state->currentCount = 0;
-    state->fireInterval = desc->interval;
-    state->fireCooldown = 0.0f;
+    state->fireCooldown = 0.0f; // 생성 즉시 첫 발 장전
+    state->desc = *desc;
 
     p->state = state;
     p->update = AimedPattern_Update;
