@@ -2,11 +2,13 @@
 
 #include "aimed/aimed.h"
 #include "rotating/rotating.h"
+#include "fixed/fixed.h"
 
 // type - 패턴생성함수 포인터를 매핑한 배열
 static const PatternCreateFunc s_pattern_catalog[PATTERN_TYPE_COUNT] = {
     [PATTERN_ROTATING] = RotatingPattern_Create,
     [PATTERN_AIMED] = AimedPattern_Create,
+    [PATTERN_FIXED] = FixedPattern_Create,
 };
 
 PatternCreateFunc PatternCatalog_GetCreateFunc(PatternType type)

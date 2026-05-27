@@ -9,6 +9,7 @@ typedef enum {
     PATTERN_NONE,
     PATTERN_ROTATING,
     PATTERN_AIMED,
+    PATTERN_FIXED,
     PATTERN_TYPE_COUNT
 } PatternType;
 
@@ -36,12 +37,16 @@ typedef struct Pattern {
 
 // 패턴 설계도
 typedef struct {
-    float duration;
-
-    // 패턴(동사) 행동 결정 매개변수 풀
-    int actionCount;    // 격발 횟수
+    // 패턴 매개변수
+    int actionCount;    // 격발 횟수 (0이면 무제한 격발)
+    float duration;     // 지속 시간
     float interval;     // 발사 간격
-    float speed;        // 회전 속도 등 범용 속도
+
+    // 패턴 고유 데이터
+    union {
+        struct { float speed; float angle; } rotating; // 회전 속도 및 시작 각도
+        struct { float angle; } fixed;                 // 고정 각도
+    } patternData;
 
     // 발사(모양) 전용 규격서
     AttackDesc attack;

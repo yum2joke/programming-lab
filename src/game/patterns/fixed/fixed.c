@@ -1,9 +1,8 @@
-#include "aimed.h"
+#include "fixed.h"
 
 #include "game/attacks/attack.h"
 #include "game/patterns/pattern.h"
 
-#include <math.h>
 #include <stdlib.h>
 
 typedef struct {
@@ -11,16 +10,16 @@ typedef struct {
     float fireCooldown;
     float elapsedTime;
     PatternDesc desc;
-} AimedState;
+} FixedState;
 
-static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x, float y)
+static PatternStatus FixedPattern_Update(Pattern* self, float deltaTime, float x, float y)
 {
     if (!self || !self->state)
     {
         return PATTERN_FINISHED;
     }
 
-    AimedState* state = (AimedState*)self->state;
+    FixedState* state = (FixedState*)self->state;
     state->elapsedTime += deltaTime;
 
     if (state->elapsedTime >= state->desc.duration)
@@ -36,20 +35,19 @@ static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x
     {
         state->fireCooldown += state->desc.interval;
 
-        float angle = Pattern_GetAngleToPlayer(x, y);
-        Attack_Execute(x, y, angle, &state->desc.attack);
+        Attack_Execute(x, y, state->desc.patternData.fixed.angle, &state->desc.attack);
         state->currentCount++;
     }
    
     return PATTERN_RUNNING;
 }
 
-Pattern* AimedPattern_Create(const PatternDesc* desc)
+Pattern* FixedPattern_Create(const PatternDesc* desc)
 {
     Pattern* p = (Pattern*)malloc(sizeof(Pattern));
     if (!p) return NULL;
 
-    AimedState* state = (AimedState*)malloc(sizeof(AimedState));
+    FixedState* state = (FixedState*)malloc(sizeof(FixedState));
     if (!state)
     {
         free(p);
@@ -62,7 +60,7 @@ Pattern* AimedPattern_Create(const PatternDesc* desc)
     state->desc = *desc;
 
     p->state = state;
-    p->update = AimedPattern_Update;
+    p->update = FixedPattern_Update;
     p->destroy = Pattern_Destroy;
 
     return p;

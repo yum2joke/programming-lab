@@ -7,6 +7,7 @@
 
 typedef struct {
     float angle;
+    int currentCount;
     float fireCooldown;
     float elapsedTime;
     PatternDesc desc;
@@ -27,14 +28,19 @@ static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, floa
         return PATTERN_FINISHED;
     }
 
-    state->angle += state->desc.speed * deltaTime;
+    // 회전하는 각도 계산
+    state->angle += state->desc.patternData.rotating.speed * deltaTime;
+
     state->fireCooldown -= deltaTime;
 
-    if (state->fireCooldown <= 0.0f)
+    // interval 간격으로 actionCount 횟수만큼 격발
+    // actionCount <= 0이면 무제한 격발
+    if (state->fireCooldown <= 0.0f && (state->desc.actionCount <= 0 || state->currentCount < state->desc.actionCount))
     {
         state->fireCooldown += state->desc.interval;
 
         Attack_Execute(x, y, state->angle, &state->desc.attack);
+        state->currentCount++;
     }
 
     return PATTERN_RUNNING;
@@ -52,7 +58,8 @@ Pattern* RotatingPattern_Create(const PatternDesc* desc)
         return NULL;
     }
 
-    state->angle = 0.0f;
+    state->angle = desc->patternData.rotating.angle;
+    state->currentCount = 0;
     state->fireCooldown = desc->interval;
     state->elapsedTime = 0.0f;
     state->desc = *desc;
