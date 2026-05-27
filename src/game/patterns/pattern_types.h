@@ -20,7 +20,7 @@ typedef enum {
 } PatternStatus;
 
 // 패턴 업데이트 함수포인터
-typedef PatternStatus (*PatternUpdateFunc)(struct Pattern* self, float deltaTime, float x, float y);
+typedef PatternStatus (*PatternUpdateFunc)(struct Pattern* self, float deltaTime, float x, float y, int ownerId);
 
 // 패턴 소멸 함수포인터
 typedef void (*PatternDestroyFunc)(struct Pattern* self);

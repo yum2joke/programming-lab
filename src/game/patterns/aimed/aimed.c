@@ -13,7 +13,7 @@ typedef struct {
     PatternDesc desc;
 } AimedState;
 
-static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x, float y)
+static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x, float y, int ownerId)
 {
     if (!self || !self->state)
     {
@@ -37,8 +37,7 @@ static PatternStatus AimedPattern_Update(Pattern* self, float deltaTime, float x
         state->fireCooldown += state->desc.interval;
 
         float angle = Pattern_GetAngleToPlayer(x, y);
-        // TODO: update 시그니처에 ownerId 추가 시 실제 주체의 ID로 교체 필요 (임시 0)
-        Attack_Execute(0, x, y, angle, &state->desc.attack);
+        Attack_Execute(ownerId, x, y, angle, &state->desc.attack);
         state->currentCount++;
     }
    

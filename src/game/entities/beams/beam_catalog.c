@@ -1,6 +1,7 @@
 #include "beam_catalog.h"
 
 #include "config.h"
+#include "game/entities/actors/actor_manager.h"
 
 #include <stddef.h>
 
@@ -8,8 +9,18 @@
 
 static void UpdateBeam_Fixed(Beam* self, float deltaTime, RECT clientRect)
 {
-    // TODO: 엔티티 매니저 도입 시 아래 코드로 시작점 강제 동기화 (트래킹 수행)
-    // EntityManager_GetPosition(self->ownerId, &self->startX, &self->startY);
+    float newX, newY;
+    if (ActorManager_GetPosition(self->ownerId, &newX, &newY))
+    {
+        self->startX = newX;
+        self->startY = newY;
+    }
+    else
+    {
+        // 발사 주체 파괴 시, 빔도 소멸
+        self->active = false;
+        return;
+    }
 
     self->elapsedTime += deltaTime;
 

@@ -2,12 +2,14 @@
 
 #include "boss_catalog.h"
 #include "config.h"
+#include "game/entities/actors/actor_manager.h"
 #include "game/patterns/pattern.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 typedef struct {
+    int actorId;
     float x;
     float y;
     float currentHP;
@@ -44,6 +46,7 @@ void Boss_Spawn(BossType type, RECT clientRect)
     s_boss.isAlive = true;
     s_boss.currentPhaseIndex = -1; // 페이즈 미설정 상태
     s_boss.lastActionIndex = -1;
+    s_boss.actorId = ActorManager_Register();
 
     for (int i = 0; i < MAX_CONCURRENT_PATTERNS; i++)
     {
@@ -57,6 +60,9 @@ void Boss_Update(float deltaTime)
     {
         return;
     }
+
+    // 매 프레임 액터 매니저에 현재 위치 보고
+    ActorManager_UpdatePosition(s_boss.actorId, Boss_GetCenterX(), Boss_GetCenterY());
 
     float hpRatio = Boss_GetHPRatio();  // 현재 보스의 체력
     int newPhaseIndex = -1;
@@ -84,7 +90,7 @@ void Boss_Update(float deltaTime)
         if (s_boss.activePatterns[i])
         {
             hasActive = true;
-            PatternStatus status = s_boss.activePatterns[i]->update(s_boss.activePatterns[i], deltaTime, Boss_GetCenterX(), Boss_GetCenterY());
+            PatternStatus status = s_boss.activePatterns[i]->update(s_boss.activePatterns[i], deltaTime, Boss_GetCenterX(), Boss_GetCenterY(), s_boss.actorId);
 
             // 패턴이 끝나면 즉시 메모리 해제 및 NULL 처리
             if (status == PATTERN_FINISHED)
@@ -189,6 +195,12 @@ void Boss_Cleanup(void)
             s_boss.activePatterns[i] = NULL;
         }
     }
+
+    if (s_boss.actorId != ACTOR_ID_INVALID)
+    {
+        ActorManager_Remove(s_boss.actorId);
+        s_boss.actorId = ACTOR_ID_INVALID;
+    }
 }
 
 void Boss_Render(HDC hdc)
@@ -231,6 +243,7 @@ void Boss_TakeDamage(float damage)
     {
         s_boss.currentHP = 0;
         s_boss.isAlive = false;
+        ActorManager_Remove(s_boss.actorId);
     }
 }
 

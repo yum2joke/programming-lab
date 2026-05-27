@@ -2,11 +2,13 @@
 #include "config.h"
 
 #include "game/attacks/attack.h"
+#include "game/entities/actors/actor_manager.h"
 
 #include <math.h>
 
 // 플레이어의 내부 상태 데이터
 typedef struct {
+    int actorId;
     float x;
     float y;
     float fireCooldown;
@@ -21,7 +23,12 @@ void Player_Init(RECT clientRect)
     s_player.x = (float)(s_player.clientRect.right - PLAYER_SIZE) / 2.0f;
     s_player.y = (float)(s_player.clientRect.bottom - PLAYER_SIZE) / 2.0f;
     s_player.fireCooldown = 0.0f;
+    s_player.actorId = ACTOR_ID_PLAYER;
+
+    ActorManager_RegisterPlayer();
 }
+
+// TODO: 플레이어 죽음 제대로 구현하기
 
 void Player_Update(float deltaTime, int mouseX, int mouseY)
 {
@@ -39,12 +46,11 @@ void Player_Update(float deltaTime, int mouseX, int mouseY)
 
         if (length > 0.001f)
         {
-            // 플레이어 임시 ID: 1
-            Attack_SingleShot(1, playerCenterX, playerCenterY, dirX / length, dirY / length, PROJECTILE_PLAYER_BULLET);
+            Attack_SingleShot(s_player.actorId, playerCenterX, playerCenterY, dirX / length, dirY / length, PROJECTILE_PLAYER_BULLET);
         }
         else    // 마우스가 플레이어 위에 있을 경우, 위로 발사
         {
-            Attack_SingleShot(1, playerCenterX, playerCenterY, 0.0f, -1.0f, PROJECTILE_PLAYER_BULLET);
+            Attack_SingleShot(s_player.actorId, playerCenterX, playerCenterY, 0.0f, -1.0f, PROJECTILE_PLAYER_BULLET);
         }
     }
 
@@ -74,6 +80,8 @@ void Player_Update(float deltaTime, int mouseX, int mouseY)
     if (s_player.x + PLAYER_SIZE > s_player.clientRect.right) s_player.x = (float)s_player.clientRect.right - PLAYER_SIZE;
     if (s_player.y < s_player.clientRect.top) s_player.y = (float)s_player.clientRect.top;
     if (s_player.y + PLAYER_SIZE > s_player.clientRect.bottom) s_player.y = (float)s_player.clientRect.bottom - PLAYER_SIZE;
+
+    ActorManager_UpdatePosition(s_player.actorId, Player_GetCenterX(), Player_GetCenterY());
 }
 
 void Player_Render(HDC hdc)

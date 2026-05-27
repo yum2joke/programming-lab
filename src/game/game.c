@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "collision/collision_manager.h"
+#include "entities/actors/actor_manager.h"
 #include "entities/actors/boss/boss.h"
 #include "entities/actors/player/player.h"
 #include "entities/projectiles/projectile.h"
@@ -29,10 +30,11 @@ void Game_Init(HWND hwnd)
     // 시드 설정
     srand((unsigned int)time(NULL));
 
+    ActorManager_Init();
     Player_Init(g_clientRect);
+    Boss_Spawn(BOSS_TYPE_A, g_clientRect);
     Projectile_Init();
     Beam_Init();
-    Boss_Spawn(BOSS_TYPE_A, g_clientRect);
     Star_Init(g_clientRect);
     g_isGameOver = false;
 }
