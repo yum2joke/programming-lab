@@ -7,10 +7,10 @@
 static const BossPhase s_boss_a_phases[] = {
     {
         .hpThreshold = 1.0f,    // 100%~
-        .patternArrCount = 3,
+        .patternArrCount = 4,
         .patternArr = (const PhasePattern[]){
             { 
-                .weight = 0.4f, 
+                .weight = 0.3f, 
                 .patternCount = 1,
                 .patterns = {
                     {
@@ -49,7 +49,7 @@ static const BossPhase s_boss_a_phases[] = {
                 }
             },
             { 
-                .weight = 0.3f, 
+                .weight = 0.2f, 
                 .patternCount = 1,
                 .patterns = {
                     {
@@ -64,6 +64,27 @@ static const BossPhase s_boss_a_phases[] = {
                                 .shape = ATTACK_SHAPE_CIRCULAR,
                                 .attackType = PROJECTILE_BOSS_BULLET,
                                 .shapeData = { .circular = { .count = 24 } }
+                            }
+                        }
+                    }
+                }
+            },
+            { 
+                .weight = 0.2f, 
+                .patternCount = 1,
+                .patterns = {
+                    {
+                        .type = PATTERN_FIXED,
+                        .desc = {
+                            .duration = 5.0f,
+                            .actionCount = 2,
+                            .interval = 3.0f,
+                            .patternData = {
+                                .fixed = { .angle = DEG2RAD(90.0f) } // 아래 방향
+                            },
+                            .attack = {
+                                .shape = ATTACK_SHAPE_SINGLE,
+                                .attackType = BEAM_FIXED,
                             }
                         }
                     }

@@ -39,11 +39,12 @@ void Player_Update(float deltaTime, int mouseX, int mouseY)
 
         if (length > 0.001f)
         {
-            Attack_SingleShot(playerCenterX, playerCenterY, dirX / length, dirY / length, PROJECTILE_PLAYER_BULLET);
+            // 플레이어 임시 ID: 1
+            Attack_SingleShot(1, playerCenterX, playerCenterY, dirX / length, dirY / length, PROJECTILE_PLAYER_BULLET);
         }
         else    // 마우스가 플레이어 위에 있을 경우, 위로 발사
         {
-            Attack_SingleShot(playerCenterX, playerCenterY, 0.0f, -1.0f, PROJECTILE_PLAYER_BULLET);
+            Attack_SingleShot(1, playerCenterX, playerCenterY, 0.0f, -1.0f, PROJECTILE_PLAYER_BULLET);
         }
     }
 

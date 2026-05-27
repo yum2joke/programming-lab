@@ -39,7 +39,8 @@ static PatternStatus RotatingPattern_Update(Pattern* self, float deltaTime, floa
     {
         state->fireCooldown += state->desc.interval;
 
-        Attack_Execute(x, y, state->angle, &state->desc.attack);
+        // TODO: update 시그니처에 ownerId 추가 시 실제 주체의 ID로 교체 필요 (임시 0)
+        Attack_Execute(0, x, y, state->angle, &state->desc.attack);
         state->currentCount++;
     }
 

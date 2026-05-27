@@ -5,10 +5,11 @@
 #include "game/entities/actors/boss/boss.h"
 #include "game/entities/actors/player/player.h"
 #include "game/entities/projectiles/projectile.h"
+#include "game/entities/beams/beam.h"
 #include "game/game.h"
 
+#include <math.h>
 #include <windows.h>
-
 
 // OOP 대신 데이터 지향 설계(DOD) 기반 충돌 시스템.
 // 배열 + struct 관리로 캐시 히트율 극대화
@@ -86,10 +87,65 @@ static void GatherCollidables()
     }
 }
 
+// 빔(선분) - 플레이어(원) 최단 거리 기반 충돌 검사
+// 충돌 알고리즘이 달라, 충돌체에 수집하지 않고 따로 처리
+static void CheckBeamCollisions(void)
+{
+    int beamCount = Beam_GetPoolSize();
+    for (int i = 0; i < beamCount; ++i)
+    {
+        const Beam* beam = Beam_GetFromPool(i);
+        if (!beam || !beam->active) continue;
+
+        // 발사 상태가 아니라면- 충돌 검사 X
+        if (beam->state != BEAM_STATE_FIRING) continue;
+
+        // 빔이 플레이어를 타격할 수 있는 마스크인지 확인
+        if (!(beam->mask & LAYER_PLAYER)) continue;
+
+        float px = Player_GetCenterX();
+        float py = Player_GetCenterY();
+
+        // 빔 시작점부터 플레이어 중심까지의 벡터
+        float vx = px - beam->startX;
+        float vy = py - beam->startY;
+
+        // 빔 방향 벡터(dirX, dirY)에 내적(Dot Product)하여 빔 진행 방향으로의 투영 길이(t) 계산
+        float t = (vx * beam->dirX) + (vy * beam->dirY);
+        float closestX, closestY;
+
+        if (t < 0.0f)
+        {
+            closestX = beam->startX;
+            closestY = beam->startY;
+        }
+        else
+        {
+            closestX = beam->startX + (t * beam->dirX);
+            closestY = beam->startY + (t * beam->dirY);
+        }
+
+        // 최단 거리 계산
+        float dx = px - closestX;
+        float dy = py - closestY;
+        float distance = sqrtf(dx * dx + dy * dy);
+        float collisionRadius = (beam->thickness / 2.0f) + (PLAYER_SIZE / 2.5f);
+
+        // 충돌 판정 (거리가 반경보다 작으면 피격)
+        if (distance < collisionRadius)
+        {
+            Game_SetGameOver();
+        }
+    }
+}
+
 void CollisionManager_CheckAll(void)
 {
     // 매 프레임마다 충돌 검사할 충돌체 배열을 새로 구성
     GatherCollidables();
+
+    // 빔 전용 수학적 충돌 검사
+    CheckBeamCollisions();
 
     // 모든 충돌체 쌍을 검사 (Broad-phase)
     for (int i = 0; i < s_collidable_count; i++)

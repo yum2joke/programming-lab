@@ -2,21 +2,23 @@
 
 #include "config.h"
 #include "game/entities/projectiles/projectile.h"
-// #include beam
+#include "game/entities/beams/beam.h"
 
 #include <math.h>
 
-
-#ifndef PI
-#define PI 3.1415926535f
-#endif
-
-void Attack_SingleShot(float originX, float originY, float dirX, float dirY, AttackEntityType attackType)
+void Attack_SingleShot(int ownerId, float originX, float originY, float dirX, float dirY, AttackEntityType attackType)
 {
-    Projectile_Spawn(attackType, originX, originY, dirX, dirY);
+    if (attackType < PROJECTILE_TYPE_COUNT)
+    {
+        Projectile_Spawn(attackType, originX, originY, dirX, dirY);
+    }
+    else
+    {
+        Beam_Spawn(ownerId, attackType, originX, originY, dirX, dirY);
+    }
 }
 
-void Attack_CircularBurst(float originX, float originY, int bulletCount, float startAngle, AttackEntityType attackType)
+void Attack_CircularBurst(int ownerId, float originX, float originY, int bulletCount, float startAngle, AttackEntityType attackType)
 {
     if (bulletCount <= 0)
     {
@@ -28,11 +30,21 @@ void Attack_CircularBurst(float originX, float originY, int bulletCount, float s
         float angle = startAngle + (i * (2.0f * PI / bulletCount));
         float dirX = cosf(angle);
         float dirY = sinf(angle);
-        Projectile_Spawn(attackType, originX, originY, dirX, dirY);
+        
+        if (attackType < PROJECTILE_TYPE_COUNT)
+        {
+            Projectile_Spawn(attackType, originX, originY, dirX, dirY);
+        }
+        else
+        {
+            Beam_Spawn(ownerId, attackType, originX, originY, dirX, dirY);
+        }
     }
 }
 
-void Attack_Execute(float originX, float originY, float centerAngle, const AttackDesc* desc)
+// TODO: 부채꼴 추가
+
+void Attack_Execute(int ownerId, float originX, float originY, float centerAngle, const AttackDesc* desc)
 {
     float dirX = 0.0f;
     float dirY = 0.0f;
@@ -42,10 +54,10 @@ void Attack_Execute(float originX, float originY, float centerAngle, const Attac
         case ATTACK_SHAPE_SINGLE:
             dirX = cosf(centerAngle);
             dirY = sinf(centerAngle);
-            Attack_SingleShot(originX, originY, dirX, dirY, desc->attackType);
+            Attack_SingleShot(ownerId, originX, originY, dirX, dirY, desc->attackType);
             break;
         case ATTACK_SHAPE_CIRCULAR:
-            Attack_CircularBurst(originX, originY, desc->shapeData.circular.count, centerAngle, desc->attackType);
+            Attack_CircularBurst(ownerId, originX, originY, desc->shapeData.circular.count, centerAngle, desc->attackType);
             break;
         case ATTACK_SHAPE_SPREAD:
             // TODO: 추후 부채꼴 발사 로직 연동

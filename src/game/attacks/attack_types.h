@@ -9,8 +9,10 @@ typedef enum {
     PROJECTILE_TYPE_COUNT,
 
     // --- 광선 (Beam) ---
-    // ...
-    
+    BEAM_FIXED = PROJECTILE_TYPE_COUNT,
+    BEAM_ROTATE,
+    BEAM_PLAYER_TRACKING,
+    ATTACK_TYPE_COUNT
 } AttackEntityType;
 
 // 투사체 시스템 호환용

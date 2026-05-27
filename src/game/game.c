@@ -5,6 +5,7 @@
 #include "entities/actors/boss/boss.h"
 #include "entities/actors/player/player.h"
 #include "entities/projectiles/projectile.h"
+#include "entities/beams/beam.h"
 #include "entities/star/star.h"
 
 #include <math.h>
@@ -30,6 +31,7 @@ void Game_Init(HWND hwnd)
 
     Player_Init(g_clientRect);
     Projectile_Init();
+    Beam_Init();
     Boss_Spawn(BOSS_TYPE_A, g_clientRect);
     Star_Init(g_clientRect);
     g_isGameOver = false;
@@ -46,6 +48,7 @@ void Game_Update(float deltaTime)
     Star_Update(deltaTime, g_clientRect);
     Player_Update(deltaTime, g_mouseX, g_mouseY);
     Projectile_Update(deltaTime, g_clientRect);
+    Beam_Update(deltaTime, g_clientRect);
     Boss_Update(deltaTime);
 
     // 충돌 처리
@@ -98,6 +101,7 @@ void Game_Render(HWND hwnd)
     // 게임 요소 그리기
     Boss_Render(hMemDC);
     Projectile_Render(hMemDC);
+    Beam_Render(hMemDC);
     Player_Render(hMemDC);
     
     // 게임오버 UI 그리기
