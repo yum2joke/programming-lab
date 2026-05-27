@@ -5,14 +5,21 @@
 #include "game/entities/actors/actor_manager.h"
 
 #include <math.h>
+#include <stdbool.h>
 
 // 플레이어의 내부 상태 데이터
 typedef struct {
     int actorId;
     float x;
     float y;
-    float fireCooldown;
+    int currentHP;
+    int maxHP;
     RECT clientRect;
+    
+    float fireCooldown;
+    bool isInvincible;
+    float invincibleTimer;
+    bool isAlive;
 } Player;
 
 static Player s_player;
@@ -24,14 +31,60 @@ void Player_Init(RECT clientRect)
     s_player.y = (float)(s_player.clientRect.bottom - PLAYER_SIZE) / 2.0f;
     s_player.fireCooldown = 0.0f;
     s_player.actorId = ACTOR_ID_PLAYER;
+    s_player.maxHP = PLAYER_MAX_HP;
+    s_player.currentHP = s_player.maxHP;
+    s_player.isInvincible = false;
+    s_player.invincibleTimer = 0.0f;
+    s_player.isAlive = true;
 
     ActorManager_RegisterPlayer();
 }
 
-// TODO: 플레이어 죽음 제대로 구현하기
+// 플레이어 상태 무적으로
+void Player_SetInvincible(float duration)
+{
+    s_player.isInvincible = true;
+    s_player.invincibleTimer = duration;
+}
+
+static void Player_Death(void)
+{
+    s_player.isAlive = false;
+    ActorManager_Remove(s_player.actorId);
+
+    // TODO: 파괴되는 모션 추가
+}
+
+void Player_TakeDamage(int damage)
+{
+    if (!s_player.isAlive || s_player.isInvincible) return;
+
+    s_player.currentHP -= damage;
+    if (s_player.currentHP <= 0)
+    {
+        s_player.currentHP = 0;
+        Player_Death();
+    }
+    else
+    {
+        Player_SetInvincible(1.0f); // 피격 시 1초간 무적
+    }
+}
 
 void Player_Update(float deltaTime, int mouseX, int mouseY)
 {
+    if (!s_player.isAlive) return;
+
+    if (s_player.isInvincible)
+    {
+        s_player.invincibleTimer -= deltaTime;
+        if (s_player.invincibleTimer <= 0.0f)
+        {
+            s_player.isInvincible = false;
+            s_player.invincibleTimer = 0.0f;
+        }
+    }
+
     // --- 발사 로직 ---
     s_player.fireCooldown -= deltaTime;
     if (s_player.fireCooldown <= 0.0f)
@@ -84,9 +137,18 @@ void Player_Update(float deltaTime, int mouseX, int mouseY)
     ActorManager_UpdatePosition(s_player.actorId, Player_GetCenterX(), Player_GetCenterY());
 }
 
+bool Player_IsAlive(void)
+{
+    return s_player.isAlive;
+}
+
 void Player_Render(HDC hdc)
 {
-    HBRUSH hPlayerBrush = CreateSolidBrush(PLAYER_COLOR);
+    if (!s_player.isAlive) return;
+
+    // 무적 상태일 경우 회색으로, 아닐 경우 원래 색상으로 렌더링
+    COLORREF color = s_player.isInvincible ? RGB(128, 128, 128) : PLAYER_COLOR;
+    HBRUSH hPlayerBrush = CreateSolidBrush(color);
     RECT playerRect = { (int)s_player.x, (int)s_player.y, (int)s_player.x + PLAYER_SIZE, (int)s_player.y + PLAYER_SIZE };
     FillRect(hdc, &playerRect, hPlayerBrush);
     DeleteObject(hPlayerBrush);

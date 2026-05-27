@@ -4,7 +4,6 @@
 
 #include <stdbool.h>
 
-
 void Boss_Spawn(BossType type, RECT clientRect);
 void Boss_Update(float deltaTime);
 void Boss_Render(HDC hdc);

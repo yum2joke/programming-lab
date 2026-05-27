@@ -231,6 +231,14 @@ void Boss_Render(HDC hdc)
     DeleteObject(hHpBrush);
 }
 
+static void Boss_Death(void)
+{
+    s_boss.isAlive = false;
+    Boss_Cleanup();
+
+    // TODO: 파괴되는 모션 추가
+}
+
 void Boss_TakeDamage(float damage)
 {
     if (!s_boss.isAlive)
@@ -242,8 +250,7 @@ void Boss_TakeDamage(float damage)
     if (s_boss.currentHP <= 0)
     {
         s_boss.currentHP = 0;
-        s_boss.isAlive = false;
-        ActorManager_Remove(s_boss.actorId);
+        Boss_Death();
     }
 }
 

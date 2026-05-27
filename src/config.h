@@ -7,10 +7,22 @@
 #define PI 3.1415926535f
 #define DEG2RAD(x) ((x) * PI / 180.0f)
 
-// 게임 설정 상수
+// 플레이어
 #define PLAYER_SIZE 32
 #define PLAYER_SPEED 500.0f // 초당 픽셀 단위 속도
 #define PLAYER_COLOR RGB(150, 150, 255)
+#define PLAYER_MAX_HP 3
+
+// 보스
+#define BOSS_WIDTH 192
+#define BOSS_HEIGHT 192
+#define BOSS_MAX_HP 1000.0f
+#define BOSS_COLOR RGB(100, 100, 100)
+#define BOSS_HP_BAR_COLOR RGB(255, 0, 0)
+#define BOSS_HP_BAR_BG_COLOR RGB(50, 50, 50)
+#define BOSS_HP_BAR_HEIGHT 10
+#define BOSS_BURST_INTERVAL 0.2f // 보스 탄막 발사 간격
+#define BOSS_ROTATION_SPEED -0.7f // 초당 라디안
 
 // 조준선
 #define CROSSHAIR_CIRCLE_RADIUS 5
@@ -52,14 +64,3 @@
 
 // 빔
 #define BEAM_MAX_COUNT 50
-
-// 보스
-#define BOSS_WIDTH 192
-#define BOSS_HEIGHT 192
-#define BOSS_MAX_HP 1000.0f
-#define BOSS_COLOR RGB(100, 100, 100)
-#define BOSS_HP_BAR_COLOR RGB(255, 0, 0)
-#define BOSS_HP_BAR_BG_COLOR RGB(50, 50, 50)
-#define BOSS_HP_BAR_HEIGHT 10
-#define BOSS_BURST_INTERVAL 0.2f // 보스 탄막 발사 간격
-#define BOSS_ROTATION_SPEED -0.7f // 초당 라디안

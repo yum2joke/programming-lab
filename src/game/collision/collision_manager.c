@@ -6,7 +6,6 @@
 #include "game/entities/actors/player/player.h"
 #include "game/entities/projectiles/projectile.h"
 #include "game/entities/beams/beam.h"
-#include "game/game.h"
 
 #include <math.h>
 #include <windows.h>
@@ -34,7 +33,7 @@ static void HandleCollision(Collidable* a, Collidable* b)
     if ((a->layer == LAYER_PLAYER && (b->layer == LAYER_BOSS || b->layer == LAYER_BOSS_BULLET)) ||
         (b->layer == LAYER_PLAYER && (a->layer == LAYER_BOSS || a->layer == LAYER_BOSS_BULLET)))
     {
-        Game_SetGameOver();
+        Player_TakeDamage(1);
     }
 }
 
@@ -134,7 +133,7 @@ static void CheckBeamCollisions(void)
         // 충돌 판정 (거리가 반경보다 작으면 피격)
         if (distance < collisionRadius)
         {
-            Game_SetGameOver();
+            Player_TakeDamage(1);
         }
     }
 }

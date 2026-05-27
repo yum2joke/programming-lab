@@ -55,6 +55,11 @@ void Game_Update(float deltaTime)
 
     // 충돌 처리
     CollisionManager_CheckAll();
+
+    if (!Player_IsAlive())
+    {
+        Game_SetGameOver();
+    }
 }
 
 // 화면 렌더링: 모든 모듈의 렌더링 함수 호출
