@@ -8,6 +8,7 @@
 #include "entities/projectiles/projectile.h"
 #include "entities/beams/beam.h"
 #include "entities/star/star.h"
+#include "ui/ui_manager.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -18,33 +19,38 @@
 // 게임 상태 변수
 static RECT g_clientRect;
 static int g_mouseX, g_mouseY;
-static bool g_isPaused = false;
-static bool g_isGameOver = false;
+static GameState g_gameState = GAME_STATE_MAIN_MENU;
 
-// 게임 초기화
-void Game_Init(HWND hwnd)
+// 게임 초기 상태로 리셋
+static void Game_Reset(void)
 {
-    GetClientRect(hwnd, &g_clientRect);
-    ShowCursor(FALSE); // 시스템 커서 숨기기
-
-    // 시드 설정
-    srand((unsigned int)time(NULL));
-
     ActorManager_Init();
     Player_Init(g_clientRect);
     Boss_Spawn(BOSS_TYPE_A, g_clientRect);
     Projectile_Init();
     Beam_Init();
     Star_Init(g_clientRect);
-    g_isGameOver = false;
+    g_gameState = GAME_STATE_PLAYING;
+
+    ShowCursor(FALSE);
+}
+
+// 게임 초기화
+void Game_Init(HWND hwnd)
+{
+    GetClientRect(hwnd, &g_clientRect);
+    srand((unsigned int)time(NULL));
+
+    Star_Init(g_clientRect);
+    g_gameState = GAME_STATE_MAIN_MENU;
 }
 
 // 매 프레임 게임 상태 업데이트: 모든 모듈의 업데이트 함수 호출
 void Game_Update(float deltaTime)
 {
-    if (g_isPaused || g_isGameOver)
+    if (g_gameState != GAME_STATE_PLAYING)
     {
-        return; // 일시정지 상태에서는 업데이트 중단
+        return; // 플레이 상태가 아닐 때는 업데이트 중단
     }
 
     Star_Update(deltaTime, g_clientRect);
@@ -59,6 +65,10 @@ void Game_Update(float deltaTime)
     if (!Player_IsAlive())
     {
         Game_SetGameOver();
+    }
+    else if (!Boss_IsAlive())
+    {
+        Game_SetGameClear();
     }
 }
 
@@ -76,68 +86,17 @@ void Game_Render(HWND hwnd)
     FillRect(hMemDC, &g_clientRect, (HBRUSH)GetStockObject(BLACK_BRUSH));
     Star_Render(hMemDC);
 
-    // 조준선 그리기
-    if (!g_isPaused)
-    {
-        HPEN hLinePen = CreatePen(PS_SOLID, CROSSHAIR_LINE_THICKNESS, CROSSHAIR_LINE_COLOR);
-        HPEN hOldPen = (HPEN)SelectObject(hMemDC, hLinePen);
-
-        float playerCenterX = Player_GetCenterX();
-        float playerCenterY = Player_GetCenterY();
-        MoveToEx(hMemDC, (int)playerCenterX, (int)playerCenterY, NULL);
-
-        // 플레이어 중심에서 마우스 커서를 관통하는 직선 계산
-        float dirX = g_mouseX - playerCenterX;
-        float dirY = g_mouseY - playerCenterY;
-        float length = sqrtf(dirX * dirX + dirY * dirY);    // 길이 구하기
-
-        if (length > 0.001f)
-        {
-            // 벡터 정규화로 화면 밖 길게 그려버리기
-            float endX = playerCenterX + (dirX / length) * 2000.0f;
-            float endY = playerCenterY + (dirY / length) * 2000.0f;
-            LineTo(hMemDC, (int)endX, (int)endY);
-        }
-
-        Ellipse(hMemDC, g_mouseX - CROSSHAIR_CIRCLE_RADIUS, g_mouseY - CROSSHAIR_CIRCLE_RADIUS, g_mouseX + CROSSHAIR_CIRCLE_RADIUS, g_mouseY + CROSSHAIR_CIRCLE_RADIUS);
-
-        SelectObject(hMemDC, hOldPen);
-        DeleteObject(hLinePen);
-    }
-
     // 게임 요소 그리기
-    Boss_Render(hMemDC);
-    Projectile_Render(hMemDC);
-    Beam_Render(hMemDC);
-    Player_Render(hMemDC);
+    if (g_gameState != GAME_STATE_MAIN_MENU)
+    {
+        Boss_Render(hMemDC);
+        Projectile_Render(hMemDC);
+        Beam_Render(hMemDC);
+        Player_Render(hMemDC);
+    }
     
-    // 게임오버 UI 그리기
-    if (g_isGameOver)
-    {
-        SetTextColor(hMemDC, GAMEOVER_TEXT_COLOR);
-        SetBkMode(hMemDC, TRANSPARENT);
-        HFONT hFont = CreateFont(GAMEOVER_FONT_SIZE, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, PAUSE_FONT_NAME);
-        HFONT hOldFont = (HFONT)SelectObject(hMemDC, hFont);
-
-        DrawText(hMemDC, GAMEOVER_TEXT, -1, &g_clientRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-        SelectObject(hMemDC, hOldFont);
-        DeleteObject(hFont);
-    }
-
-    // 일시정지 UI 그리기
-    if (g_isPaused)
-    {
-        SetTextColor(hMemDC, PAUSE_TEXT_COLOR);
-        SetBkMode(hMemDC, TRANSPARENT);
-        HFONT hFont = CreateFont(PAUSE_FONT_SIZE, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, PAUSE_FONT_NAME);
-        HFONT hOldFont = (HFONT)SelectObject(hMemDC, hFont);
-
-        DrawText(hMemDC, PAUSE_TEXT, -1, &g_clientRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-        SelectObject(hMemDC, hOldFont);
-        DeleteObject(hFont);
-    }
+    // UI 그리기
+    UIManager_Render(hMemDC, g_clientRect, g_gameState);
 
     // 백 버퍼의 내용을 화면으로 복사
     BitBlt(hdc, 0, 0, g_clientRect.right, g_clientRect.bottom, hMemDC, 0, 0, SRCCOPY);
@@ -154,9 +113,10 @@ void Game_HandleActivate(WPARAM wParam)
 {
     if (LOWORD(wParam) == WA_INACTIVE)
     {
-        if (!g_isPaused)
+        // 플레이 중일 때만 비활성화 시 일시정지로 전환
+        if (g_gameState == GAME_STATE_PLAYING)
         {
-            g_isPaused = true;
+            g_gameState = GAME_STATE_PAUSED;
             ShowCursor(TRUE);
             ClipCursor(NULL);
         }
@@ -168,14 +128,17 @@ void Game_HandleKeyDown(HWND hwnd, WPARAM wParam)
 {
     if (wParam == VK_ESCAPE)
     {
-        g_isPaused = !g_isPaused;
-        if (g_isPaused)
+        // 게임 플레이 중에만 일시정지 가능
+        if (g_gameState == GAME_STATE_PLAYING)
         {
+            g_gameState = GAME_STATE_PAUSED;
             ShowCursor(TRUE);
             ClipCursor(NULL);
         }
-        else
+        // 일시정지 해제
+        else if (g_gameState == GAME_STATE_PAUSED)
         {
+            g_gameState = GAME_STATE_PLAYING;
             ShowCursor(FALSE);
             RECT clipRect;
             GetClientRect(hwnd, &clipRect);
@@ -193,11 +156,33 @@ void Game_HandleMouseMove(LPARAM lParam)
     g_mouseY = HIWORD(lParam);
 }
 
+// 마우스 클릭 처리
+// TODO: down이 아닌 up으로 구현. hover랑 같이 구현필요
+void Game_HandleMouseDown(LPARAM lParam)
+{
+    int mouseX = LOWORD(lParam);
+    int mouseY = HIWORD(lParam);
+
+    UIAction action = UIManager_CheckButtonClick(mouseX, mouseY, g_clientRect, g_gameState);
+    switch (action)
+    {
+        case UI_ACTION_START:
+        case UI_ACTION_RESTART:
+            Game_Reset();
+            break;
+        case UI_ACTION_MAIN_MENU:
+            g_gameState = GAME_STATE_MAIN_MENU;
+            break;
+        default:
+            break;
+    }
+}
+
 // 창 크기 변경 처리
 void Game_HandleSize(HWND hwnd)
 {
     GetClientRect(hwnd, &g_clientRect);
-    if (!g_isPaused)
+    if (g_gameState == GAME_STATE_PLAYING)
     {
         RECT clipRect;
         GetClientRect(hwnd, &clipRect);
@@ -217,5 +202,14 @@ void Game_Cleanup(void)
 
 void Game_SetGameOver(void)
 {
-    g_isGameOver = true;
+    g_gameState = GAME_STATE_GAME_OVER;
+    ShowCursor(TRUE);
+    ClipCursor(NULL);
+}
+
+void Game_SetGameClear(void)
+{
+    g_gameState = GAME_STATE_GAME_CLEAR;
+    ShowCursor(TRUE);
+    ClipCursor(NULL);
 }

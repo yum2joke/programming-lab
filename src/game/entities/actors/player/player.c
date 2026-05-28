@@ -20,6 +20,8 @@ typedef struct {
     bool isInvincible;
     float invincibleTimer;
     bool isAlive;
+    int targetX;
+    int targetY;
 } Player;
 
 static Player s_player;
@@ -36,6 +38,8 @@ void Player_Init(RECT clientRect)
     s_player.isInvincible = false;
     s_player.invincibleTimer = 0.0f;
     s_player.isAlive = true;
+    s_player.targetX = 0;
+    s_player.targetY = 0;
 
     ActorManager_RegisterPlayer();
 }
@@ -74,6 +78,10 @@ void Player_TakeDamage(int damage)
 void Player_Update(float deltaTime, int mouseX, int mouseY)
 {
     if (!s_player.isAlive) return;
+
+    // 마우스 좌표 기억
+    s_player.targetX = mouseX;
+    s_player.targetY = mouseY;
 
     if (s_player.isInvincible)
     {
@@ -152,6 +160,30 @@ void Player_Render(HDC hdc)
     RECT playerRect = { (int)s_player.x, (int)s_player.y, (int)s_player.x + PLAYER_SIZE, (int)s_player.y + PLAYER_SIZE };
     FillRect(hdc, &playerRect, hPlayerBrush);
     DeleteObject(hPlayerBrush);
+
+    // 조준선 그리기
+    HPEN hLinePen = CreatePen(PS_SOLID, CROSSHAIR_LINE_THICKNESS, CROSSHAIR_LINE_COLOR);
+    HPEN hOldPen = (HPEN)SelectObject(hdc, hLinePen);
+
+    float playerCenterX = Player_GetCenterX();
+    float playerCenterY = Player_GetCenterY();
+    MoveToEx(hdc, (int)playerCenterX, (int)playerCenterY, NULL);
+
+    float dirX = (float)s_player.targetX - playerCenterX;
+    float dirY = (float)s_player.targetY - playerCenterY;
+    float length = sqrtf(dirX * dirX + dirY * dirY);
+
+    if (length > 0.001f)
+    {
+        float endX = playerCenterX + (dirX / length) * 2000.0f;
+        float endY = playerCenterY + (dirY / length) * 2000.0f;
+        LineTo(hdc, (int)endX, (int)endY);
+    }
+
+    Ellipse(hdc, s_player.targetX - CROSSHAIR_CIRCLE_RADIUS, s_player.targetY - CROSSHAIR_CIRCLE_RADIUS, s_player.targetX + CROSSHAIR_CIRCLE_RADIUS, s_player.targetY + CROSSHAIR_CIRCLE_RADIUS);
+
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hLinePen);
 }
 
 float Player_GetX(void)

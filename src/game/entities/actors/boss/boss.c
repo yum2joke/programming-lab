@@ -61,7 +61,6 @@ void Boss_Update(float deltaTime)
         return;
     }
 
-    // 매 프레임 액터 매니저에 현재 위치 보고
     ActorManager_UpdatePosition(s_boss.actorId, Boss_GetCenterX(), Boss_GetCenterY());
 
     float hpRatio = Boss_GetHPRatio();  // 현재 보스의 체력

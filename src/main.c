@@ -29,6 +29,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         Game_HandleMouseMove(lParam);
         break;
 
+    case WM_LBUTTONDOWN:
+        Game_HandleMouseDown(lParam);
+        break;
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
