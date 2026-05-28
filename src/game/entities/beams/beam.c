@@ -60,6 +60,7 @@ void Beam_Spawn(int ownerId, AttackEntityType type, float startX, float startY, 
             b->mask = desc->mask;
             b->color = desc->color;
             b->thickness = desc->thickness;
+            b->shape = desc->shape;
             b->chargeTime = desc->chargeTime;
             b->duration = desc->duration;
             b->update = desc->update;

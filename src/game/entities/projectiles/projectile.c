@@ -62,6 +62,8 @@ void Projectile_Spawn(ProjectileType type, float startX, float startY, float dir
             p->color = desc->color;
             p->size = desc->size;
             p->speed = desc->speed;
+            p->shape = desc->shape;
+            p->collisionRadius = desc->collisionRadius;
             p->update = desc->update;
             p->render = desc->render;
 

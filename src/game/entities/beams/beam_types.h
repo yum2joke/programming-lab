@@ -23,6 +23,7 @@ typedef struct {
     int mask;
     COLORREF color;
     float thickness;    // 빔 두께
+    CollisionShape shape; // 빔 형태
     float chargeTime;   // 발사 전 차징시간
     float duration;     // 빔 지속 시간
     
@@ -44,6 +45,7 @@ struct Beam {
     int mask;
     COLORREF color;
     float thickness;
+    CollisionShape shape;
     float chargeTime;
     float duration;
 

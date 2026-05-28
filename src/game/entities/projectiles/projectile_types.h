@@ -19,6 +19,8 @@ typedef struct {
     float speed;
     COLORREF color;
     int size;
+    CollisionShape shape;
+    float collisionRadius;
     
     // 함수 포인터. 순수가상함수 역할
     ProjectileUpdateFunc update;
@@ -38,6 +40,8 @@ struct Projectile {
     COLORREF color;
     int size;
     float speed;
+    CollisionShape shape;
+    float collisionRadius;
     ProjectileUpdateFunc update;
     ProjectileRenderFunc render;
 

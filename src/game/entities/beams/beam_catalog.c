@@ -97,10 +97,11 @@ static void RenderBeam_Default(const Beam* self, HDC hdc)
 // --- 설계도 ---
 
 static const BeamDesc s_fixed_beam_desc = {
-    .layer = LAYER_BOSS_BULLET,
+    .layer = LAYER_ENEMY_ATTACK,
     .mask = LAYER_PLAYER,
     .color = RGB(200, 140, 255),
     .thickness = 80.0f,
+    .shape = SHAPE_CAPSULE,
     .chargeTime = 1.0f,
     .duration = 2.0f,
     .update = UpdateBeam_Fixed,

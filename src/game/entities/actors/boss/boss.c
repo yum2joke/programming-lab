@@ -211,8 +211,12 @@ void Boss_Render(HDC hdc)
 
     // 보스 본체 그리기
     HBRUSH hBossBrush = CreateSolidBrush(BOSS_COLOR);
-    RECT bossRect = { (int)s_boss.x, (int)s_boss.y, (int)s_boss.x + BOSS_WIDTH, (int)s_boss.y + BOSS_HEIGHT };
-    FillRect(hdc, &bossRect, hBossBrush);
+    HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
+    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBossBrush);
+    Ellipse(hdc, (int)s_boss.x, (int)s_boss.y, (int)s_boss.x + BOSS_WIDTH, (int)s_boss.y + BOSS_HEIGHT);
+    SelectObject(hdc, hOldBrush);
+    SelectObject(hdc, hOldPen);
     DeleteObject(hBossBrush);
 
     // 체력바 회색배경 그리기

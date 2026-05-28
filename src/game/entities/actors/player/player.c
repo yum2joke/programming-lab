@@ -150,6 +150,11 @@ bool Player_IsAlive(void)
     return s_player.isAlive;
 }
 
+bool Player_IsInvincible(void)
+{
+    return s_player.isInvincible;
+}
+
 void Player_Render(HDC hdc)
 {
     if (!s_player.isAlive) return;
@@ -157,13 +162,17 @@ void Player_Render(HDC hdc)
     // 무적 상태일 경우 회색으로, 아닐 경우 원래 색상으로 렌더링
     COLORREF color = s_player.isInvincible ? RGB(128, 128, 128) : PLAYER_COLOR;
     HBRUSH hPlayerBrush = CreateSolidBrush(color);
-    RECT playerRect = { (int)s_player.x, (int)s_player.y, (int)s_player.x + PLAYER_SIZE, (int)s_player.y + PLAYER_SIZE };
-    FillRect(hdc, &playerRect, hPlayerBrush);
+    HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
+    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hPlayerBrush);
+    Ellipse(hdc, (int)s_player.x, (int)s_player.y, (int)s_player.x + PLAYER_SIZE, (int)s_player.y + PLAYER_SIZE);
+    SelectObject(hdc, hOldBrush);
+    SelectObject(hdc, hOldPen);
     DeleteObject(hPlayerBrush);
 
     // 조준선 그리기
     HPEN hLinePen = CreatePen(PS_SOLID, CROSSHAIR_LINE_THICKNESS, CROSSHAIR_LINE_COLOR);
-    HPEN hOldPen = (HPEN)SelectObject(hdc, hLinePen);
+    hOldPen = (HPEN)SelectObject(hdc, hLinePen);
 
     float playerCenterX = Player_GetCenterX();
     float playerCenterY = Player_GetCenterY();
@@ -180,7 +189,7 @@ void Player_Render(HDC hdc)
         LineTo(hdc, (int)endX, (int)endY);
     }
 
-    Ellipse(hdc, s_player.targetX - CROSSHAIR_CIRCLE_RADIUS, s_player.targetY - CROSSHAIR_CIRCLE_RADIUS, s_player.targetX + CROSSHAIR_CIRCLE_RADIUS, s_player.targetY + CROSSHAIR_CIRCLE_RADIUS);
+    Ellipse(hdc, s_player.targetX - CROSSHAIR_SPHERE_RADIUS, s_player.targetY - CROSSHAIR_SPHERE_RADIUS, s_player.targetX + CROSSHAIR_SPHERE_RADIUS, s_player.targetY + CROSSHAIR_SPHERE_RADIUS);
 
     SelectObject(hdc, hOldPen);
     DeleteObject(hLinePen);

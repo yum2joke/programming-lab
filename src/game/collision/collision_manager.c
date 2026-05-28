@@ -29,13 +29,59 @@ static void HandleCollision(Collidable* a, Collidable* b)
         Boss_TakeDamage(BULLET_DAMAGE);
     }
 
-    // 플레이어 vs 보스 또는 플레이어 vs 보스 총알
-    if ((a->layer == LAYER_PLAYER && (b->layer == LAYER_BOSS || b->layer == LAYER_BOSS_BULLET)) ||
-        (b->layer == LAYER_PLAYER && (a->layer == LAYER_BOSS || a->layer == LAYER_BOSS_BULLET)))
+    // 플레이어 vs 보스 또는 플레이어 vs 적 공격entity
+    if ((a->layer == LAYER_PLAYER && (b->layer == LAYER_BOSS || b->layer == LAYER_ENEMY_ATTACK)) ||
+        (b->layer == LAYER_PLAYER && (a->layer == LAYER_BOSS || a->layer == LAYER_ENEMY_ATTACK)))
     {
         Player_TakeDamage(1);
     }
 }
+
+// --- Narrow-phase 충돌 알고리즘 ---
+
+// 현재 필요X
+static bool CheckCollision_AABB_AABB(const RECT* a, const RECT* b)
+{
+    RECT intersection;
+    return IntersectRect(&intersection, a, b) != 0;
+}
+
+static bool CheckCollision_Sphere_Sphere(const Sphere* a, const Sphere* b)
+{
+    float dx = a->x - b->x;
+    float dy = a->y - b->y;
+    float distanceSq = dx * dx + dy * dy;
+    float radiusSum = a->radius + b->radius;
+    
+    // sqrt(제곱근) 연산을 피하기 위해 반지름의 합을 제곱하여 비교합니다.
+    return distanceSq <= (radiusSum * radiusSum);
+}
+
+static bool CheckCollision_Capsule_Sphere(float capX, float capY, float capDirX, float capDirY, float capLength, float capRadius, const Sphere* sphere)
+{
+    float vx = sphere->x - capX;
+    float vy = sphere->y - capY;
+
+    float t = (vx * capDirX) + (vy * capDirY);
+    
+    // 선분 길이 내로 제한 (Clamping)
+    if (t < 0.0f) t = 0.0f;
+    else if (t > capLength) t = capLength;
+
+    float closestX = capX + (t * capDirX);
+    float closestY = capY + (t * capDirY);
+
+    float dx = sphere->x - closestX;
+    float dy = sphere->y - closestY;
+    
+    // sqrtf 대신 제곱 비교로 성능 최적화
+    float distanceSq = dx * dx + dy * dy;
+    float radiusSum = capRadius + sphere->radius;
+
+    return distanceSq <= (radiusSum * radiusSum);
+}
+
+// --- 전체 충돌체 관리 함수 ---
 
 // 모든 활성 객체를 충돌체 목록으로 수집
 static void GatherCollidables()
@@ -47,19 +93,22 @@ static void GatherCollidables()
     {
         s_collidables[s_collidable_count].layer = LAYER_BOSS;
         s_collidables[s_collidable_count].mask = LAYER_PLAYER_BULLET | LAYER_PLAYER;
-        s_collidables[s_collidable_count].rect = Boss_GetRect();
+        s_collidables[s_collidable_count].shape = SHAPE_SPHERE;
+        s_collidables[s_collidable_count].data.sphere.x = Boss_GetCenterX();
+        s_collidables[s_collidable_count].data.sphere.y = Boss_GetCenterY();
+        s_collidables[s_collidable_count].data.sphere.radius = BOSS_WIDTH / 2.0f;
         s_collidable_count++;
     }
     
     // 플레이어
-    if (s_collidable_count < MAX_COLLIDABLES)
+    if (Player_IsAlive() && !Player_IsInvincible() && s_collidable_count < MAX_COLLIDABLES)
     {
         s_collidables[s_collidable_count].layer = LAYER_PLAYER;
-        s_collidables[s_collidable_count].mask = LAYER_BOSS | LAYER_BOSS_BULLET;
-        s_collidables[s_collidable_count].rect.left = (LONG)Player_GetX();
-        s_collidables[s_collidable_count].rect.top = (LONG)Player_GetY();
-        s_collidables[s_collidable_count].rect.right = (LONG)Player_GetX() + PLAYER_SIZE;
-        s_collidables[s_collidable_count].rect.bottom = (LONG)Player_GetY() + PLAYER_SIZE;
+        s_collidables[s_collidable_count].mask = LAYER_BOSS | LAYER_ENEMY_ATTACK;
+        s_collidables[s_collidable_count].shape = SHAPE_SPHERE;
+        s_collidables[s_collidable_count].data.sphere.x = Player_GetCenterX();
+        s_collidables[s_collidable_count].data.sphere.y = Player_GetCenterY();
+        s_collidables[s_collidable_count].data.sphere.radius = PLAYER_SIZE / 2.0f;
         s_collidable_count++;
     }
 
@@ -73,78 +122,88 @@ static void GatherCollidables()
         {
             s_collidables[s_collidable_count].layer = projectile->layer;
             s_collidables[s_collidable_count].mask = projectile->mask;
+            s_collidables[s_collidable_count].shape = projectile->shape;
             
-            // 충돌 영역 계산 (투사체의 x, y는 중심 좌표)
-            s_collidables[s_collidable_count].rect.left = (LONG)projectile->x - projectile->size / 2;
-            s_collidables[s_collidable_count].rect.top = (LONG)projectile->y - projectile->size / 2;
-            s_collidables[s_collidable_count].rect.right = (LONG)projectile->x + projectile->size / 2;
-            s_collidables[s_collidable_count].rect.bottom = (LONG)projectile->y + projectile->size / 2;
+            if (projectile->shape == SHAPE_SPHERE)
+            {
+                s_collidables[s_collidable_count].data.sphere.x = projectile->x;
+                s_collidables[s_collidable_count].data.sphere.y = projectile->y;
+                s_collidables[s_collidable_count].data.sphere.radius = projectile->collisionRadius;
+            }
+            else if (projectile->shape == SHAPE_AABB)
+            {
+                s_collidables[s_collidable_count].data.aabb.left = (LONG)projectile->x - projectile->size / 2;
+                s_collidables[s_collidable_count].data.aabb.top = (LONG)projectile->y - projectile->size / 2;
+                s_collidables[s_collidable_count].data.aabb.right = (LONG)projectile->x + projectile->size / 2;
+                s_collidables[s_collidable_count].data.aabb.bottom = (LONG)projectile->y + projectile->size / 2;
+            }
             
             s_collidables[s_collidable_count].source_index = i;
             s_collidable_count++;
         }
     }
-}
 
-// 빔(선분) - 플레이어(원) 최단 거리 기반 충돌 검사
-// 충돌 알고리즘이 달라, 충돌체에 수집하지 않고 따로 처리
-static void CheckBeamCollisions(void)
-{
-    int beamCount = Beam_GetPoolSize();
-    for (int i = 0; i < beamCount; ++i)
+    // 모든 빔
+    for (int i = 0; i < Beam_GetPoolSize(); i++)
     {
+        if (s_collidable_count >= MAX_COLLIDABLES) break;
+
         const Beam* beam = Beam_GetFromPool(i);
-        if (!beam || !beam->active) continue;
-
-        // 발사 상태가 아니라면- 충돌 검사 X
-        if (beam->state != BEAM_STATE_FIRING) continue;
-
-        // 빔이 플레이어를 타격할 수 있는 마스크인지 확인
-        if (!(beam->mask & LAYER_PLAYER)) continue;
-
-        float px = Player_GetCenterX();
-        float py = Player_GetCenterY();
-
-        // 빔 시작점부터 플레이어 중심까지의 벡터
-        float vx = px - beam->startX;
-        float vy = py - beam->startY;
-
-        // 빔 방향 벡터(dirX, dirY)에 내적(Dot Product)하여 빔 진행 방향으로의 투영 길이(t) 계산
-        float t = (vx * beam->dirX) + (vy * beam->dirY);
-        float closestX, closestY;
-
-        if (t < 0.0f)
+        if (beam && beam->active && beam->state == BEAM_STATE_FIRING)
         {
-            closestX = beam->startX;
-            closestY = beam->startY;
-        }
-        else
-        {
-            closestX = beam->startX + (t * beam->dirX);
-            closestY = beam->startY + (t * beam->dirY);
-        }
-
-        // 최단 거리 계산
-        float dx = px - closestX;
-        float dy = py - closestY;
-        float distance = sqrtf(dx * dx + dy * dy);
-        float collisionRadius = (beam->thickness / 2.0f) + (PLAYER_SIZE / 2.5f);
-
-        // 충돌 판정 (거리가 반경보다 작으면 피격)
-        if (distance < collisionRadius)
-        {
-            Player_TakeDamage(1);
+            s_collidables[s_collidable_count].layer = beam->layer;
+            s_collidables[s_collidable_count].mask = beam->mask;
+            s_collidables[s_collidable_count].shape = beam->shape;
+            
+            if (beam->shape == SHAPE_CAPSULE)
+            {
+                s_collidables[s_collidable_count].data.capsule.x = beam->startX;
+                s_collidables[s_collidable_count].data.capsule.y = beam->startY;
+                s_collidables[s_collidable_count].data.capsule.dirX = beam->dirX;
+                s_collidables[s_collidable_count].data.capsule.dirY = beam->dirY;
+                s_collidables[s_collidable_count].data.capsule.length = 2500.0f;
+                s_collidables[s_collidable_count].data.capsule.radius = beam->thickness / 2.0f;
+            }
+            s_collidables[s_collidable_count].source_index = i; // 빔은 독립된 생명주기가 있어, source_index는 현재 미사용
+            s_collidable_count++;
         }
     }
+}
+
+// 충돌체의 shape 따져, 알맞은 충돌 알고리즘 호출
+static bool CheckCollision(const Collidable* a, const Collidable* b)
+{
+    // 항상 a->shape의 CollisionShape enum이 작도록 swap
+    if (a->shape > b->shape)
+    {
+        const Collidable* temp = a;
+        a = b;
+        b = temp;
+    }
+
+    if (a->shape == SHAPE_AABB && b->shape == SHAPE_AABB)
+    {
+        return CheckCollision_AABB_AABB(&a->data.aabb, &b->data.aabb);
+    }
+    else if (a->shape == SHAPE_SPHERE && b->shape == SHAPE_SPHERE)
+    {
+        return CheckCollision_Sphere_Sphere(&a->data.sphere, &b->data.sphere);
+    }
+    else if (a->shape == SHAPE_SPHERE && b->shape == SHAPE_CAPSULE)
+    {
+        const Sphere* sph = &a->data.sphere;
+        const Capsule* cap = &b->data.capsule;
+        return CheckCollision_Capsule_Sphere(cap->x, cap->y, cap->dirX, cap->dirY, cap->length, cap->radius, sph);
+    }
+    // TODO: AABB vs Sphere 충돌 구현-?
+
+    return false; 
 }
 
 void CollisionManager_CheckAll(void)
 {
     // 매 프레임마다 충돌 검사할 충돌체 배열을 새로 구성
     GatherCollidables();
-
-    // 빔 전용 수학적 충돌 검사
-    CheckBeamCollisions();
 
     // 모든 충돌체 쌍을 검사 (Broad-phase)
     for (int i = 0; i < s_collidable_count; i++)
@@ -157,9 +216,8 @@ void CollisionManager_CheckAll(void)
             // LayerMask를 이용해 충돌 가능한지 확인
             if ((obj_A->mask & obj_B->layer) && (obj_B->mask & obj_A->layer))
             {
-                // AABB 충돌 검사
-                RECT intersection;
-                if (IntersectRect(&intersection, &obj_A->rect, &obj_B->rect))   // Narrow-phase
+                // 어떤 충돌체들인지, 정말로 충돌한 것인지 판단 (Narrow-phase)
+                if (CheckCollision(obj_A, obj_B))
                 {
                     HandleCollision(obj_A, obj_B);
                 }

@@ -24,8 +24,8 @@ static void UpdateProjectile_Linear(Projectile* self, float deltaTime, RECT clie
 // --- 렌더링 함수 ---
 // TODO: 파일 분리 필요.
 
-// 사각형 렌더링
-static void RenderProjectile_Default(const Projectile* self, HDC hdc)
+// 사각형 렌더링 (사용 X)
+static void RenderProjectile_Square(const Projectile* self, HDC hdc)
 {
     HBRUSH hBrush = CreateSolidBrush(self->color);
     RECT rect = {
@@ -39,7 +39,7 @@ static void RenderProjectile_Default(const Projectile* self, HDC hdc)
 }
 
 // 원 렌더링
-static void RenderProjectile_Circle(const Projectile* self, HDC hdc)
+static void RenderProjectile_Sphere(const Projectile* self, HDC hdc)
 {
     HBRUSH hBrush = CreateSolidBrush(self->color);
     HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
@@ -68,30 +68,36 @@ static const ProjectileDesc s_player_bullet_desc = {
     .speed = BULLET_SPEED,
     .color = BULLET_COLOR,
     .size = BULLET_SIZE,
+    .shape = SHAPE_SPHERE,
+    .collisionRadius = BULLET_SIZE / 2.0f,
     .update = UpdateProjectile_Linear,
-    .render = RenderProjectile_Default
+    .render = RenderProjectile_Sphere
 };
 
 // 보스 기본 총알
 static const ProjectileDesc s_boss_bullet_desc = {
-    .layer = LAYER_BOSS_BULLET,
+    .layer = LAYER_ENEMY_ATTACK,
     .mask = LAYER_PLAYER,
     .speed = BOSS_BULLET_SPEED,
     .color = BOSS_BULLET_COLOR,
     .size = BULLET_SIZE,
+    .shape = SHAPE_SPHERE,
+    .collisionRadius = BULLET_SIZE / 2.0f,
     .update = UpdateProjectile_Linear,
-    .render = RenderProjectile_Default
+    .render = RenderProjectile_Sphere
 };
 
 // 느린 속도의 대형 플라즈마 구체
 static const ProjectileDesc s_plasma_desc = {
-    .layer = LAYER_BOSS_BULLET,
+    .layer = LAYER_ENEMY_ATTACK,
     .mask = LAYER_PLAYER,
     .speed = BOSS_PLASMA_SPEED,
     .color = BOSS_PLASMA_COLOR,
     .size = BOSS_PLASMA_SIZE,
+    .shape = SHAPE_SPHERE,
+    .collisionRadius = BOSS_PLASMA_SIZE / 2.0f,
     .update = UpdateProjectile_Linear,
-    .render = RenderProjectile_Circle
+    .render = RenderProjectile_Sphere
 };
 
 // --- 설계도 배열 ---
