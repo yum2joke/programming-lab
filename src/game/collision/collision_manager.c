@@ -16,27 +16,6 @@
 static Collidable s_collidables[MAX_COLLIDABLES];
 static int s_collidable_count = 0;
 
-// 충돌 발생 시 결과 처리
-static void HandleCollision(Collidable* a, Collidable* b)
-{
-    // 플레이어 총알 vs 보스
-    if ((a->layer == LAYER_PLAYER_BULLET && b->layer == LAYER_BOSS) ||
-        (a->layer == LAYER_BOSS && b->layer == LAYER_PLAYER_BULLET))
-    {
-        Collidable* bullet_collidable = (a->layer == LAYER_PLAYER_BULLET) ? a : b;
-        
-        Projectile_Deactivate(bullet_collidable->source_index);
-        Boss_TakeDamage(BULLET_DAMAGE);
-    }
-
-    // 플레이어 vs 보스 또는 플레이어 vs 적 공격entity
-    if ((a->layer == LAYER_PLAYER && (b->layer == LAYER_BOSS || b->layer == LAYER_ENEMY_ATTACK)) ||
-        (b->layer == LAYER_PLAYER && (a->layer == LAYER_BOSS || a->layer == LAYER_ENEMY_ATTACK)))
-    {
-        Player_TakeDamage(1);
-    }
-}
-
 // --- Narrow-phase 충돌 알고리즘 ---
 
 // 현재 필요X
@@ -198,6 +177,41 @@ static bool CheckCollision(const Collidable* a, const Collidable* b)
     // TODO: AABB vs Sphere 충돌 구현-?
 
     return false; 
+}
+
+// 충돌 발생 시 결과 처리
+static void HandleCollision(Collidable* a, Collidable* b)
+{
+    // 항상 a->shape의 CollisionShape enum이 작도록 swap
+    if (a->layer > b->layer)
+    {
+        Collidable* temp = a;
+        a = b;
+        b = temp;
+    }
+
+    // 플레이어 총알 vs 보스
+    if (a->layer == LAYER_PLAYER_BULLET && b->layer == LAYER_BOSS)
+    {
+        Projectile_Deactivate(a->source_index);
+        Boss_TakeDamage(BULLET_DAMAGE);
+    }
+
+    // 플레이어 vs 보스 또는 플레이어 vs 적 공격entity
+    if (a->layer == LAYER_PLAYER && (b->layer == LAYER_BOSS || b->layer == LAYER_ENEMY_ATTACK))
+    {
+        Player_TakeDamage(1);
+
+        // 적 공격entity가 !passThrough인 투사체라면 소멸
+        if (b->layer == LAYER_ENEMY_ATTACK && b->shape == SHAPE_SPHERE)
+        {
+            const Projectile* proj = Projectile_GetFromPool(b->source_index);
+            if (proj && !proj->passThrough)
+            {
+                Projectile_Deactivate(b->source_index);
+            }
+        }
+    }
 }
 
 void CollisionManager_CheckAll(void)

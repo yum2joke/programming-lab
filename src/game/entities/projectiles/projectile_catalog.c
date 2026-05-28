@@ -70,6 +70,7 @@ static const ProjectileDesc s_player_bullet_desc = {
     .size = BULLET_SIZE,
     .shape = SHAPE_SPHERE,
     .collisionRadius = BULLET_SIZE / 2.0f,
+    .passThrough = false,
     .update = UpdateProjectile_Linear,
     .render = RenderProjectile_Sphere
 };
@@ -83,6 +84,7 @@ static const ProjectileDesc s_boss_bullet_desc = {
     .size = BULLET_SIZE,
     .shape = SHAPE_SPHERE,
     .collisionRadius = BULLET_SIZE / 2.0f,
+    .passThrough = false,
     .update = UpdateProjectile_Linear,
     .render = RenderProjectile_Sphere
 };
@@ -96,6 +98,7 @@ static const ProjectileDesc s_plasma_desc = {
     .size = BOSS_PLASMA_SIZE,
     .shape = SHAPE_SPHERE,
     .collisionRadius = BOSS_PLASMA_SIZE / 2.0f,
+    .passThrough = true,
     .update = UpdateProjectile_Linear,
     .render = RenderProjectile_Sphere
 };

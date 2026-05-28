@@ -21,6 +21,7 @@ typedef struct {
     int size;
     CollisionShape shape;
     float collisionRadius;
+    bool passThrough;       // 부딪혀도 사라지지 않고 관통
     
     // 함수 포인터. 순수가상함수 역할
     ProjectileUpdateFunc update;
@@ -42,6 +43,7 @@ struct Projectile {
     float speed;
     CollisionShape shape;
     float collisionRadius;
+    bool passThrough;
     ProjectileUpdateFunc update;
     ProjectileRenderFunc render;
 
