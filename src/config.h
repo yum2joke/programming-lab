@@ -3,6 +3,10 @@
 #include <windows.h>
 #include <tchar.h>
 
+// --- 시스템 ---
+
+#define FPS_LIMIT 60
+
 // 수학 상수
 #define PI 3.1415926535f
 #define DEG2RAD(x) ((x) * PI / 180.0f)
