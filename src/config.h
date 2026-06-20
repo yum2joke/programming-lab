@@ -34,6 +34,8 @@
 #define BOSS_HP_BAR_HEIGHT 10
 #define BOSS_BURST_INTERVAL 0.2f // 보스 탄막 발사 간격
 #define BOSS_ROTATION_SPEED -0.7f // 초당 라디안
+#define BOSS_SPEED_X 100.0f
+#define BOSS_SPEED_Y 5.0f
 
 // --- UI ---
 

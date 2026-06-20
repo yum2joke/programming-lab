@@ -22,7 +22,7 @@ static int g_mouseX, g_mouseY;
 static GameState g_gameState = GAME_STATE_MAIN_MENU;
 
 // 게임 초기 상태로 리셋
-static void Game_Reset(void)
+static void Game_Reset(HWND hwnd)
 {
     ActorManager_Init();
     Player_Init(g_clientRect);
@@ -33,6 +33,11 @@ static void Game_Reset(void)
     g_gameState = GAME_STATE_PLAYING;
 
     ShowCursor(FALSE);
+    RECT clipRect;
+    GetClientRect(hwnd, &clipRect);
+    ClientToScreen(hwnd, (LPPOINT)&clipRect.left);
+    ClientToScreen(hwnd, (LPPOINT)&clipRect.right);
+    ClipCursor(&clipRect);
 }
 
 // 게임 초기화
@@ -158,7 +163,7 @@ void Game_HandleMouseMove(LPARAM lParam)
 
 // 마우스 클릭 처리
 // TODO: down이 아닌 up으로 구현. hover랑 같이 구현필요
-void Game_HandleMouseDown(LPARAM lParam)
+void Game_HandleMouseDown(HWND hwnd, LPARAM lParam)
 {
     int mouseX = LOWORD(lParam);
     int mouseY = HIWORD(lParam);
@@ -168,7 +173,7 @@ void Game_HandleMouseDown(LPARAM lParam)
     {
         case UI_ACTION_START:
         case UI_ACTION_RESTART:
-            Game_Reset();
+            Game_Reset(hwnd);
             break;
         case UI_ACTION_MAIN_MENU:
             g_gameState = GAME_STATE_MAIN_MENU;

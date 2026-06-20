@@ -3,6 +3,7 @@
 #include "boss_catalog.h"
 #include "config.h"
 #include "game/entities/actors/actor_manager.h"
+#include "game/entities/actors/player/player.h"
 #include "game/patterns/pattern.h"
 #include "asset_manager.h"
 #include "gdiplus_c.h"
@@ -65,9 +66,46 @@ void Boss_Update(float deltaTime)
         return;
     }
 
-    ActorManager_UpdatePosition(s_boss.actorId, Boss_GetCenterX(), Boss_GetCenterY());
-
     s_boss.imageAngle += s_boss.currentBossDesc->imageRotationSpeed * deltaTime;
+
+    // 플레이어 좌우(x) 추적
+    {
+        float targetX = Player_GetCenterX();
+        float currentCenterX = Boss_GetCenterX();
+        float delta = targetX - currentCenterX;
+        float maxMove = BOSS_SPEED_X * deltaTime;
+        if (delta > maxMove) delta = maxMove;
+        else if (delta < -maxMove) delta = -maxMove;
+
+        s_boss.x += delta;
+
+        // 화면 경계 벗어나지 않게
+        float minX = (float)s_boss.clientRect.left;
+        float maxX = (float)(s_boss.clientRect.right - BOSS_WIDTH);
+        if (s_boss.x < minX) s_boss.x = minX;
+        if (s_boss.x > maxX) s_boss.x = maxX;
+    }
+
+    // Y축 가까워짐
+    {
+        // deltaTime 변수가 Boss_Update에 있음 가정
+        float targetCenterY = Player_GetCenterY();
+        float currentCenterY = Boss_GetCenterY();
+        float deltaY = targetCenterY - currentCenterY;
+        float maxMoveY = BOSS_SPEED_Y * deltaTime;
+        if (deltaY > maxMoveY) deltaY = maxMoveY;
+        else if (deltaY < -maxMoveY) deltaY = -maxMoveY;
+        
+        s_boss.y += deltaY;
+
+        // 화면 경계 벗어나지 않게
+        float minY = (float)s_boss.clientRect.top;
+        float maxY = (float)(s_boss.clientRect.bottom - BOSS_HEIGHT);
+        if (s_boss.y < minY) s_boss.y = minY;
+        if (s_boss.y > maxY) s_boss.y = maxY;
+    }
+
+    ActorManager_UpdatePosition(s_boss.actorId, Boss_GetCenterX(), Boss_GetCenterY());
 
     float hpRatio = Boss_GetHPRatio();  // 현재 보스의 체력
     int newPhaseIndex = -1;

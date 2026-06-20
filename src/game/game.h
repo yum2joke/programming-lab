@@ -24,7 +24,7 @@ void Game_Cleanup(void);
 void Game_HandleActivate(WPARAM wParam);
 void Game_HandleKeyDown(HWND hwnd, WPARAM wParam);
 void Game_HandleMouseMove(LPARAM lParam);
-void Game_HandleMouseDown(LPARAM lParam);
+void Game_HandleMouseDown(HWND hwnd, LPARAM lParam);
 void Game_HandleSize(HWND hwnd);
 
 // 게임 상태 변경
