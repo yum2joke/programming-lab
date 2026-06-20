@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "game/entities/actors/actor_manager.h"
+#include "gdiplus_c.h"
 
 #include <stddef.h>
 
@@ -46,52 +47,65 @@ static void UpdateBeam_Fixed(Beam* self, float deltaTime, RECT clientRect)
 
 static void RenderBeam_Default(const Beam* self, HDC hdc)
 {
-    int endX = (int)(self->startX + self->dirX * 2500.0f);
-    int endY = (int)(self->startY + self->dirY * 2500.0f);
+    float endX = self->startX + self->dirX * 2500.0f;
+    float endY = self->startY + self->dirY * 2500.0f;
+
+    GpGraphics* graphics = NULL;
+    GdipCreateFromHDC(hdc, &graphics);
+    GdipSetSmoothingMode(graphics, SmoothingModeAntiAlias);
 
     if (self->state == BEAM_STATE_CHARGING)
     {
         // 경고 범위
-        HPEN hWarningPen = CreatePen(PS_SOLID, (int)self->thickness, RGB(110, 50, 50));
-        HPEN hOldPen = (HPEN)SelectObject(hdc, hWarningPen);
-        MoveToEx(hdc, (int)self->startX, (int)self->startY, NULL);
-        LineTo(hdc, endX, endY);
+        GpPen* warningPen = NULL;
+        GdipCreatePen1(MAKE_ARGB(70, 255, 0, 0), self->thickness, UnitPixel, &warningPen);
+        GdipDrawLine(graphics, warningPen, self->startX, self->startY, endX, endY);
+        GdipDeletePen(warningPen);
 
         // 경고선
-        HPEN hWarningLinePen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
-        SelectObject(hdc, hWarningLinePen);
-        MoveToEx(hdc, (int)self->startX, (int)self->startY, NULL);
-        LineTo(hdc, endX, endY);
-
-        SelectObject(hdc, hOldPen);
-        DeleteObject(hWarningPen);
-        DeleteObject(hWarningLinePen);
+        GpPen* warningLinePen = NULL;
+        GdipCreatePen1(MAKE_ARGB(255, 255, 0, 0), 2.0f, UnitPixel, &warningLinePen);
+        GdipDrawLine(graphics, warningLinePen, self->startX, self->startY, endX, endY);
+        GdipDeletePen(warningLinePen);
     }
     else if (self->state == BEAM_STATE_FIRING)
     {
-        // 외곽 광원
-        HPEN hOuterPen = CreatePen(PS_SOLID, (int)self->thickness, self->color);
-        HPEN hOldPen = (HPEN)SelectObject(hdc, hOuterPen);
-        MoveToEx(hdc, (int)self->startX, (int)self->startY, NULL);
-        LineTo(hdc, endX, endY);
+        // 빔의 진행 방향에 수직인 벡터 계산 (dirX, dirY는 단위 벡터)
+        float perpX = -self->dirY;
+        float perpY = self->dirX;
+        
+        // 선의 중심축에서 양쪽 가장자리(두께의 절반)로 떨어진 두 점
+        // 이 두 점을 기준으로 그라데이션 축이 설정됩니다.
+        GpPointF p1 = { self->startX - perpX * (self->thickness / 2.0f), self->startY - perpY * (self->thickness / 2.0f) };
+        GpPointF p2 = { self->startX + perpX * (self->thickness / 2.0f), self->startY + perpY * (self->thickness / 2.0f) };
+        
+        GpLineGradient* brush = NULL;
+        // 0은 GpWrapModeTile을 의미합니다. 초기 색상은 아래 Blend에서 덮어씌워집니다.
+        GdipCreateLineBrush(&p1, &p2, 0, 0, 0, &brush);
 
-        // 외곽 광원2
-        HPEN hOuter2Pen = CreatePen(PS_SOLID, (int)(self->thickness * 0.8f), RGB(200, 180, 255));
-        SelectObject(hdc, hOuter2Pen);
-        MoveToEx(hdc, (int)self->startX, (int)self->startY, NULL);
-        LineTo(hdc, endX, endY);
+        // 중심은 하얀색, 양쪽 외곽은 보라색인 3점 보간 설정
+        ARGB colors[6] = {
+            MAKE_ARGB(100, 200, 140, 255), // 왼쪽 외곽 (보라)
+            MAKE_ARGB(255, 200, 140, 255), // 왼쪽 외곽 (보라)
+            MAKE_ARGB(255, 255, 255, 255), // 중심 (하양)
+            MAKE_ARGB(255, 255, 255, 255), // 중심 (하양)
+            MAKE_ARGB(255, 200, 140, 255), // 왼쪽 외곽 (보라)
+            MAKE_ARGB(100, 200, 140, 255)  // 오른쪽 외곽 (보라)
+        };
+        REAL positions[6] = { 0.0f, 0.2f, 0.4f, 0.6f, 0.8f, 1.0f };
+        GdipSetLinePresetBlend(brush, colors, positions, 6);
 
-        // 중심 코어
-        HPEN hInnerPen = CreatePen(PS_SOLID, (int)(self->thickness * 0.6f), RGB(255, 255, 255));
-        SelectObject(hdc, hInnerPen);
-        MoveToEx(hdc, (int)self->startX, (int)self->startY, NULL);
-        LineTo(hdc, endX, endY);
+        GpPen* pen = NULL;
+        // 브러시를 기반으로 펜을 생성합니다. (GdipCreatePen2)
+        GdipCreatePen2((GpBrush*)brush, self->thickness, UnitPixel, &pen);
 
-        SelectObject(hdc, hOldPen);
-        DeleteObject(hOuterPen);
-        DeleteObject(hOuter2Pen);
-        DeleteObject(hInnerPen);
+        GdipDrawLine(graphics, pen, self->startX, self->startY, endX, endY);
+
+        GdipDeletePen(pen);
+        GdipDeleteBrush((GpBrush*)brush);
     }
+    
+    GdipDeleteGraphics(graphics);
 }
 
 // --- 설계도 ---

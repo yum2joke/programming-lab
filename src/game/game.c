@@ -90,8 +90,8 @@ void Game_Render(HWND hwnd)
     if (g_gameState != GAME_STATE_MAIN_MENU)
     {
         Boss_Render(hMemDC);
-        Projectile_Render(hMemDC);
         Beam_Render(hMemDC);
+        Projectile_Render(hMemDC);
         Player_Render(hMemDC);
     }
     

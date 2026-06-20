@@ -20,4 +20,5 @@ add_executable(game WIN32 ${SOURCES})
 target_link_libraries(game
     user32
     gdi32
+    gdiplus
 )

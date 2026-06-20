@@ -156,6 +156,8 @@ static const BossPhase s_boss_a_phases[] = {
 
 // 전체 설계도
 const BossDesc BossA_Desc = {
+    .imageAsset = ASSET_BOSS_A,
+    .imageRotationSpeed = 45.0f,
     .maxHp = BOSS_MAX_HP,
     .phaseCount = 2,
     .phases = s_boss_a_phases

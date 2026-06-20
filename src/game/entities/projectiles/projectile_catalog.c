@@ -1,6 +1,7 @@
 #include "projectile_catalog.h"
 
 #include "config.h"
+#include "gdiplus_c.h"
 
 #include <stddef.h> // NULL
 
@@ -41,22 +42,41 @@ static void RenderProjectile_Square(const Projectile* self, HDC hdc)
 // 원 렌더링
 static void RenderProjectile_Sphere(const Projectile* self, HDC hdc)
 {
-    HBRUSH hBrush = CreateSolidBrush(self->color);
-    HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
-    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
-    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+    GpGraphics* graphics = NULL;
+    GdipCreateFromHDC(hdc, &graphics);
+    GdipSetSmoothingMode(graphics, SmoothingModeAntiAlias);
 
-    int renderSize = (int)(self->size * 1.5f);
+    float renderSize = self->size * 1.5f;
+    float x = self->x - renderSize / 2.0f;
+    float y = self->y - renderSize / 2.0f;
 
-    Ellipse(hdc,
-        (int)self->x - renderSize / 2,
-        (int)self->y - renderSize / 2,
-        (int)self->x + renderSize / 2,
-        (int)self->y + renderSize / 2);
+    // COLORREF를 분리하여 GDI+ ARGB 생성 (가장자리는 투명하게)
+    BYTE r = GetRValue(self->color);
+    BYTE g = GetGValue(self->color);
+    BYTE b = GetBValue(self->color);
 
-    SelectObject(hdc, hOldPen);
-    SelectObject(hdc, hOldBrush);
-    DeleteObject(hBrush);
+    GpPath* path = NULL;
+    GdipCreatePath(0, &path); // 0 = FillModeAlternate
+    GdipAddPathEllipse(path, x, y, renderSize, renderSize);
+
+    GpPathGradient* brush = NULL;
+    GdipCreatePathGradientFromPath(path, &brush);
+    
+    // 방사형 그라데이션 다중 색상 보간 (0.0 가장자리, 1.0 중심)
+    ARGB colors[4] = {
+        MAKE_ARGB(180, r, g, b),        // 0.0f (가장자리)
+        MAKE_ARGB(255, r, g, b),        // 0.0f (가장자리)
+        MAKE_ARGB(255, 255, 255, 255),  // 0.7f: 하양
+        MAKE_ARGB(255, 255, 255, 255)   // 1.0f (중심): 화이트 코어
+    };
+    REAL positions[4] = { 0.0f, 0.3f, 0.7f, 1.0f };
+    GdipSetPathGradientPresetBlend(brush, colors, positions, 4);
+
+    GdipFillEllipse(graphics, (GpBrush*)brush, x, y, renderSize, renderSize);
+
+    GdipDeleteBrush((GpBrush*)brush);
+    GdipDeletePath(path);
+    GdipDeleteGraphics(graphics);
 }
 
 // --- 설계도 ---

@@ -1,5 +1,7 @@
 #include "game/game.h"
 #include "config.h"
+#include "gdiplus_c.h"
+#include "asset_manager.h"
 
 #include <stdbool.h>
 #include <tchar.h>
@@ -64,6 +66,15 @@ int WINAPI WinMain(
     HWND hwnd;
     MSG msg;
     WNDCLASS WndClass;
+
+    // GDI+ 엔진 초기화
+    ULONG_PTR gdiplusToken;
+    GdiplusStartupInput gdiplusStartupInput = {0};
+    gdiplusStartupInput.GdiplusVersion = 1; // GDI+ 버전 1 사용
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    // 에셋 매니저 초기화 및 이미지 로드
+    AssetManager_Init();
 
     WndClass.style = CS_HREDRAW | CS_VREDRAW;
     WndClass.lpfnWndProc = WndProc;
@@ -132,7 +143,7 @@ int WINAPI WinMain(
             if (fpsTimer >= 1.0f)
             {
                 TCHAR title[256];
-                _stprintf_s(title, 256, _T("최후의 저항 - FPS: %d"), frameCount);
+                snprintf(title, sizeof(title), "최후의 저항 - FPS: %d", frameCount);
                 SetWindowText(hwnd, title);
                 
                 while (fpsTimer >= 1.0f) {
@@ -166,6 +177,10 @@ int WINAPI WinMain(
 
     // 프로그램 종료 시 Sleep 해상도 원상복구
     timeEndPeriod(1);
+
+    // GDI+ 리소스 정리 및 엔진 종료
+    AssetManager_Cleanup();
+    GdiplusShutdown(gdiplusToken);
 
     return (int)msg.wParam;
 }

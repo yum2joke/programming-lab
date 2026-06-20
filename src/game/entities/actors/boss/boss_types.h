@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/patterns/pattern_types.h"
+#include "asset_manager.h"
 
 #define MAX_CONCURRENT_PATTERNS 4
 
@@ -35,6 +36,8 @@ typedef struct {
 
 // 보스의 완전한 설계도
 typedef struct {
+    AssetType imageAsset;
+    float imageRotationSpeed;
     float maxHp;
     int phaseCount;
     const BossPhase* phases; // 페이즈 정의 배열

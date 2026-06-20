@@ -3,6 +3,8 @@
 
 #include "game/attacks/attack.h"
 #include "game/entities/actors/actor_manager.h"
+#include "gdiplus_c.h"
+#include "asset_manager.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -159,24 +161,56 @@ void Player_Render(HDC hdc)
 {
     if (!s_player.isAlive) return;
 
-    // 무적 상태일 경우 회색으로, 아닐 경우 원래 색상으로 렌더링
-    COLORREF color = s_player.isInvincible ? RGB(128, 128, 128) : PLAYER_COLOR;
-    HBRUSH hPlayerBrush = CreateSolidBrush(color);
-    HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
-    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
-    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hPlayerBrush);
-    Ellipse(hdc, (int)s_player.x, (int)s_player.y, (int)s_player.x + PLAYER_SIZE, (int)s_player.y + PLAYER_SIZE);
-    SelectObject(hdc, hOldBrush);
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hPlayerBrush);
+    // GDI+를 활용한 조준선 반투명 안티앨리어싱 렌더링
+    GpGraphics* graphics = NULL;
+    GdipCreateFromHDC(hdc, &graphics);
+    GdipSetSmoothingMode(graphics, SmoothingModeAntiAlias);
 
-    // 조준선 그리기
-    HPEN hLinePen = CreatePen(PS_SOLID, CROSSHAIR_LINE_THICKNESS, CROSSHAIR_LINE_COLOR);
-    hOldPen = (HPEN)SelectObject(hdc, hLinePen);
+    // 플레이어 이미지 렌더링
+    GpImage* playerImage = AssetManager_GetImage(ASSET_PLAYER);
+    if (playerImage)
+    {
+        // 무적 상태일 때 깜빡임
+        if (s_player.isInvincible && ((int)(s_player.invincibleTimer * 15.0f) % 2 == 0))
+        {
+            GpImageAttributes* imageAttr = NULL;
+            GdipCreateImageAttributes(&imageAttr);
 
+            // 투명도 0.4 변경
+            ColorMatrix colorMatrix = {
+                {
+                    {1.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+                    {0.0f, 1.0f, 0.0f, 0.0f, 0.0f},
+                    {0.0f, 0.0f, 1.0f, 0.0f, 0.0f},
+                    {0.0f, 0.0f, 0.0f, 0.4f, 0.0f},
+                    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f}
+                }
+            };
+            
+            // ColorAdjustTypeDefault, ColorMatrixFlagDefault
+            GdipSetImageAttributesColorMatrix(imageAttr, 0, TRUE, &colorMatrix, NULL, 0);
+
+            UINT width, height;
+            GdipGetImageWidth(playerImage, &width);
+            GdipGetImageHeight(playerImage, &height);
+
+            GdipDrawImageRectRect(graphics, playerImage, s_player.x, s_player.y, (REAL)PLAYER_SIZE, (REAL)PLAYER_SIZE,
+                                  0.0f, 0.0f, (REAL)width, (REAL)height, UnitPixel, imageAttr, NULL, NULL);
+
+            GdipDisposeImageAttributes(imageAttr);
+        }
+        else
+        {
+            GdipDrawImageRect(graphics, playerImage, s_player.x, s_player.y, (REAL)PLAYER_SIZE, (REAL)PLAYER_SIZE);
+        }
+    }
+    
+    GpPen* pen = NULL;
+    // 투명도 120의 은은한 조준선
+    GdipCreatePen1(MAKE_ARGB(120, 200, 200, 50), CROSSHAIR_LINE_THICKNESS, UnitPixel, &pen);
+    
     float playerCenterX = Player_GetCenterX();
     float playerCenterY = Player_GetCenterY();
-    MoveToEx(hdc, (int)playerCenterX, (int)playerCenterY, NULL);
 
     float dirX = (float)s_player.targetX - playerCenterX;
     float dirY = (float)s_player.targetY - playerCenterY;
@@ -186,13 +220,14 @@ void Player_Render(HDC hdc)
     {
         float endX = playerCenterX + (dirX / length) * 2000.0f;
         float endY = playerCenterY + (dirY / length) * 2000.0f;
-        LineTo(hdc, (int)endX, (int)endY);
+        GdipDrawLine(graphics, pen, playerCenterX, playerCenterY, endX, endY);
     }
 
-    Ellipse(hdc, s_player.targetX - CROSSHAIR_SPHERE_RADIUS, s_player.targetY - CROSSHAIR_SPHERE_RADIUS, s_player.targetX + CROSSHAIR_SPHERE_RADIUS, s_player.targetY + CROSSHAIR_SPHERE_RADIUS);
-
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hLinePen);
+    float radius = (float)CROSSHAIR_SPHERE_RADIUS;
+    GdipDrawEllipse(graphics, pen, s_player.targetX - radius, s_player.targetY - radius, radius * 2.0f, radius * 2.0f);
+    
+    GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
 }
 
 float Player_GetX(void)

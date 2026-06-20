@@ -14,7 +14,7 @@
 // --- actor ---
 
 // 플레이어
-#define PLAYER_SIZE 32
+#define PLAYER_SIZE 48
 #define PLAYER_SPEED 500.0f // 초당 픽셀 단위 속도
 #define PLAYER_COLOR RGB(150, 150, 255)
 #define PLAYER_MAX_HP 3

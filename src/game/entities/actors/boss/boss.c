@@ -4,6 +4,8 @@
 #include "config.h"
 #include "game/entities/actors/actor_manager.h"
 #include "game/patterns/pattern.h"
+#include "asset_manager.h"
+#include "gdiplus_c.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -16,6 +18,7 @@ typedef struct {
     float maxHP;
     RECT clientRect;
     bool isAlive;
+    float imageAngle;
 
     // --- 보스 프레임워크 상태 변수 ---
     Pattern* activePatterns[MAX_CONCURRENT_PATTERNS]; // 동시에 실행 중인 패턴들
@@ -43,6 +46,7 @@ void Boss_Spawn(BossType type, RECT clientRect)
     s_boss.y = 50.0f;
     s_boss.maxHP = s_boss.currentBossDesc->maxHp;
     s_boss.currentHP = s_boss.maxHP;
+    s_boss.imageAngle = 0.0f;
     s_boss.isAlive = true;
     s_boss.currentPhaseIndex = -1; // 페이즈 미설정 상태
     s_boss.lastActionIndex = -1;
@@ -62,6 +66,8 @@ void Boss_Update(float deltaTime)
     }
 
     ActorManager_UpdatePosition(s_boss.actorId, Boss_GetCenterX(), Boss_GetCenterY());
+
+    s_boss.imageAngle += s_boss.currentBossDesc->imageRotationSpeed * deltaTime;
 
     float hpRatio = Boss_GetHPRatio();  // 현재 보스의 체력
     int newPhaseIndex = -1;
@@ -209,15 +215,26 @@ void Boss_Render(HDC hdc)
         return;
     }
 
-    // 보스 본체 그리기
-    HBRUSH hBossBrush = CreateSolidBrush(BOSS_COLOR);
-    HPEN hPen = (HPEN)GetStockObject(NULL_PEN);
-    HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
-    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBossBrush);
-    Ellipse(hdc, (int)s_boss.x, (int)s_boss.y, (int)s_boss.x + BOSS_WIDTH, (int)s_boss.y + BOSS_HEIGHT);
-    SelectObject(hdc, hOldBrush);
-    SelectObject(hdc, hOldPen);
-    DeleteObject(hBossBrush);
+    // 보스 본체 이미지 렌더링
+    GpGraphics* graphics = NULL;
+    GdipCreateFromHDC(hdc, &graphics);
+
+    GpImage* bossImage = AssetManager_GetImage(s_boss.currentBossDesc->imageAsset);
+    if (bossImage)
+    {
+        // 회전 속도가 0이 아닐 경우에만 회전
+        if (s_boss.currentBossDesc->imageRotationSpeed != 0.0f)
+        {
+            float cx = Boss_GetCenterX();
+            float cy = Boss_GetCenterY();
+            GdipTranslateWorldTransform(graphics, cx, cy, MatrixOrderPrepend); // 중심점으로 이동
+            GdipRotateWorldTransform(graphics, s_boss.imageAngle, MatrixOrderPrepend); // 회전
+            GdipTranslateWorldTransform(graphics, -cx, -cy, MatrixOrderPrepend); // 원상 복구
+        }
+
+        GdipDrawImageRect(graphics, bossImage, s_boss.x, s_boss.y, (REAL)BOSS_WIDTH, (REAL)BOSS_HEIGHT);
+    }
+    GdipDeleteGraphics(graphics);
 
     // 체력바 회색배경 그리기
     RECT hpBgRect = { 10, 10, s_boss.clientRect.right - 10, 10 + BOSS_HP_BAR_HEIGHT };

@@ -87,7 +87,7 @@ static void GatherCollidables()
         s_collidables[s_collidable_count].shape = SHAPE_SPHERE;
         s_collidables[s_collidable_count].data.sphere.x = Player_GetCenterX();
         s_collidables[s_collidable_count].data.sphere.y = Player_GetCenterY();
-        s_collidables[s_collidable_count].data.sphere.radius = PLAYER_SIZE / 2.0f;
+        s_collidables[s_collidable_count].data.sphere.radius = PLAYER_SIZE / 3.0f;  // 48 / 3.0 = 16.0 (지름 32)
         s_collidable_count++;
     }
 
