@@ -128,11 +128,12 @@ void Player_Update(float deltaTime, int mouseX, int mouseY)
     if (GetAsyncKeyState('W') & 0x8000) deltaY -= PLAYER_SPEED;
     if (GetAsyncKeyState('S') & 0x8000)
     {
-        float lowerLimitY = (float)s_player.clientRect.bottom - PLAYER_SIZE;
+        float lowerLimitY = (float)s_player.clientRect.bottom - PLAYER_SIZE * 2;
         if (s_player.y < lowerLimitY)
         {
+            deltaY = 0.0;
             float ratio = (lowerLimitY - s_player.y) / lowerLimitY;
-            deltaY += PLAYER_SPEED * ratio;
+            deltaY += PLAYER_SPEED * sqrtf(ratio);
         }
     }
 

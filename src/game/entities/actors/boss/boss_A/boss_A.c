@@ -16,9 +16,9 @@ static const BossPhase s_boss_a_phases[] = {
                     {
                         .type = PATTERN_AIMED,
                         .desc = {
-                            .duration = 1.0f,
+                            .duration = 1.5f,
                             .actionCount = 3,
-                            .interval = 0.3f,
+                            .interval = 0.5f,
                             .attack = {
                                 .shape = ATTACK_SHAPE_SINGLE,
                                 .attackType = PROJECTILE_PLASMA
@@ -34,10 +34,10 @@ static const BossPhase s_boss_a_phases[] = {
                     {
                         .type = PATTERN_ROTATING,
                         .desc = {
-                            .duration = 1.0f,
+                            .duration = 3.0f,
                             .interval = BOSS_BURST_INTERVAL,
                             .patternData = {
-                                .rotating = { .speed = BOSS_ROTATION_SPEED * 0.7f, .angle = 0.0f }
+                                .rotating = { .speed = BOSS_ROTATION_SPEED, .angle = 0.0f }
                             },
                             .attack = {
                                 .shape = ATTACK_SHAPE_CIRCULAR,
@@ -55,10 +55,10 @@ static const BossPhase s_boss_a_phases[] = {
                     {
                         .type = PATTERN_ROTATING,
                         .desc = {
-                            .duration = 1.0f,
-                            .interval = BOSS_BURST_INTERVAL * 0.8f,
+                            .duration = 3.0f,
+                            .interval = BOSS_BURST_INTERVAL * 1.5f,
                             .patternData = {
-                                .rotating = { .speed = BOSS_ROTATION_SPEED * 1.2f, .angle = 0.0f }
+                                .rotating = { .speed = BOSS_ROTATION_SPEED * 0.66f, .angle = 0.0f }
                             },
                             .attack = {
                                 .shape = ATTACK_SHAPE_CIRCULAR,
@@ -98,15 +98,30 @@ static const BossPhase s_boss_a_phases[] = {
         .patternArr = (const PhasePattern[]){
             { 
                 .weight = 0.5f, 
-                .patternCount = 1,
+                .patternCount = 2,
                 .patterns = {
+                    {
+                        .type = PATTERN_FIXED,
+                        .desc = {
+                            .duration = 5.0f,
+                            .actionCount = 2,
+                            .interval = 3.0f,
+                            .patternData = {
+                                .fixed = { .angle = DEG2RAD(90.0f) } // 아래 방향
+                            },
+                            .attack = {
+                                .shape = ATTACK_SHAPE_SINGLE,
+                                .attackType = BEAM_FIXED,
+                            }
+                        }
+                    },
                     {
                         .type = PATTERN_ROTATING,
                         .desc = {
-                            .duration = 2.0f,
-                            .interval = BOSS_BURST_INTERVAL * 0.8f,
+                            .duration = 5.0f,
+                            .interval = BOSS_BURST_INTERVAL * 1.5f,
                             .patternData = {
-                                .rotating = { .speed = BOSS_ROTATION_SPEED * 1.2f, .angle = 0.0f }
+                                .rotating = { .speed = BOSS_ROTATION_SPEED, .angle = 0.0f }
                             },
                             .attack = {
                                 .shape = ATTACK_SHAPE_CIRCULAR,
@@ -124,9 +139,9 @@ static const BossPhase s_boss_a_phases[] = {
                     {
                         .type = PATTERN_AIMED,
                         .desc = {
-                            .duration = 2.0f,
-                            .actionCount = 5,
-                            .interval = 0.2f,
+                            .duration = 5.0f,
+                            .actionCount = 10,
+                            .interval = 0.5f,
                             .attack = {
                                 .shape = ATTACK_SHAPE_SINGLE,
                                 .attackType = PROJECTILE_PLASMA
@@ -136,15 +151,15 @@ static const BossPhase s_boss_a_phases[] = {
                     {
                         .type = PATTERN_ROTATING,
                         .desc = {
-                            .duration = 2.0f,
-                            .interval = BOSS_BURST_INTERVAL * 0.6f,
+                            .duration = 5.0f,
+                            .interval = BOSS_BURST_INTERVAL * 1.5f,
                             .patternData = {
-                                .rotating = { .speed = BOSS_ROTATION_SPEED * -1.5f, .angle = 0.0f }
+                                .rotating = { .speed = BOSS_ROTATION_SPEED, .angle = 0.0f }
                             },
                             .attack = {
                                 .shape = ATTACK_SHAPE_CIRCULAR,
                                 .attackType = PROJECTILE_BOSS_BULLET,
-                                .shapeData = { .circular = { .count = 16 } }
+                                .shapeData = { .circular = { .count = 24 } }
                             }
                         }
                     }

@@ -15,7 +15,7 @@
 
 // 플레이어
 #define PLAYER_SIZE 48
-#define PLAYER_SPEED 500.0f // 초당 픽셀 단위 속도
+#define PLAYER_SPEED 400.0f // 초당 픽셀 단위 속도
 #define PLAYER_COLOR RGB(150, 150, 255)
 #define PLAYER_MAX_HP 3
 
@@ -27,7 +27,7 @@
 // 보스
 #define BOSS_WIDTH 192
 #define BOSS_HEIGHT 192
-#define BOSS_MAX_HP 1000.0f
+#define BOSS_MAX_HP 1500.0f
 #define BOSS_COLOR RGB(100, 100, 100)
 #define BOSS_HP_BAR_COLOR RGB(255, 0, 0)
 #define BOSS_HP_BAR_BG_COLOR RGB(50, 50, 50)
@@ -35,7 +35,7 @@
 #define BOSS_BURST_INTERVAL 0.2f // 보스 탄막 발사 간격
 #define BOSS_ROTATION_SPEED -0.7f // 초당 라디안
 #define BOSS_SPEED_X 100.0f
-#define BOSS_SPEED_Y 5.0f
+#define BOSS_SPEED_Y 10.0f
 
 // --- UI ---
 
@@ -82,10 +82,10 @@
 // 투사체
 #define PROJECTILE_MAX_COUNT 500
 
-#define BULLET_SPEED 1500.0f
+#define BULLET_SPEED 700.0f
 #define BULLET_SIZE 10
 #define BULLET_COLOR RGB(181, 230, 29)
-#define FIRE_RATE 0.05f // 발당 대기 시간
+#define FIRE_RATE 0.1f // 발당 대기 시간
 #define BULLET_DAMAGE 10.0f
 
 #define BOSS_BULLET_COLOR RGB(255, 100, 100)
